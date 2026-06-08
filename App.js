@@ -12,6 +12,7 @@ import { FarmDetailScreen } from './src/screens/FarmDetailScreen';
 import { AlertsFeedScreen } from './src/screens/AlertsFeedScreen';
 import { InterventionDetailScreen } from './src/screens/InterventionDetailScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { AddFieldScreen } from './src/screens/AddFieldScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -52,6 +53,7 @@ export default function App() {
           <Stack.Screen name="AlertsFeed" component={AlertsFeedScreen} />
           <Stack.Screen name="InterventionDetail" component={InterventionDetailScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen name="AddField" component={AddFieldScreen} />
         </Stack.Navigator>
         </NavigationContainer>
       </>

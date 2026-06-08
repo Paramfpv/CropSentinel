@@ -81,7 +81,7 @@ export const FarmDetailScreen = ({ navigation, route }) => {
           <Text style={styles.primaryButtonText}>View Intervention</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

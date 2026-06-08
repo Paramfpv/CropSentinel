@@ -124,19 +124,19 @@ export const MyFarmsScreen = ({ navigation }) => {
       />
 
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItemActive}>
+        <TouchableOpacity style={styles.bottomNavItemActive} onPress={() => navigation.navigate('MyFarms')}>
           <Feather name="home" size={18} color={materialTheme.colors.primary} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('MyFarms')}>
           <MaterialCommunityIcons name="sprout" size={18} color={materialTheme.colors.textSecondary} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('InterventionDetail')}>
           <Feather name="activity" size={18} color={materialTheme.colors.textSecondary} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('AlertsFeed')}>
           <Feather name="bell" size={18} color={materialTheme.colors.textSecondary} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('Settings')}>
           <Feather name="user" size={18} color={materialTheme.colors.textSecondary} />
         </TouchableOpacity>
       </View>
