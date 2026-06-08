@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { materialTheme } from '../theme';
 import { crops } from '../assets';
 
@@ -13,11 +14,45 @@ const getHealthColor = (score) => {
 
 export const FarmDetailScreen = ({ navigation, route }) => {
   const farm = route.params?.farm || {
-    name: 'Farm Detail',
+    name: 'North Field',
     cropType: 'Wheat',
     healthScore: 72,
     ndvi: 0.61,
     moisture: 'Low',
+    droughtRisk: 'High',
+    riskSeverity: 'high',
+  };
+
+  const zoneType = farm.zoneType || (farm.riskSeverity === 'high' ? 'drought' : 'healthy');
+
+  const getZoneChipStyle = (zoneType) => {
+    const type = zoneType ? zoneType.toLowerCase() : '';
+    if (type === 'healthy' || type.includes('health')) {
+      return {
+        backgroundColor: '#DCFCE7',
+        color: materialTheme.colors.success,
+        label: 'Healthy',
+      };
+    }
+    if (type === 'drought' || type.includes('drought')) {
+      return {
+        backgroundColor: '#FEE2E2',
+        color: materialTheme.colors.error,
+        label: 'Drought',
+      };
+    }
+    if (type === 'water stress' || type === 'water_stress' || type.includes('water') || type.includes('stress')) {
+      return {
+        backgroundColor: '#FEF3C7',
+        color: materialTheme.colors.warning,
+        label: 'Water Stress',
+      };
+    }
+    return {
+      backgroundColor: materialTheme.colors.primaryContainer,
+      color: materialTheme.colors.primary,
+      label: zoneType ? zoneType.charAt(0).toUpperCase() + zoneType.slice(1) : 'Unknown',
+    };
   };
 
   return (
@@ -51,9 +86,11 @@ export const FarmDetailScreen = ({ navigation, route }) => {
             <Text style={styles.healthScore}>{farm.healthScore}</Text>
             <Text style={styles.healthDivider}>/100</Text>
           </View>
-          <Text style={[styles.riskLabel, { color: getHealthColor(farm.healthScore) }]}>
-            {farm.healthScore >= 80 ? 'Healthy' : farm.healthScore >= 60 ? 'Moderate Risk' : 'Drought Risk'}
-          </Text>
+          <View style={[styles.zoneChip, { backgroundColor: getZoneChipStyle(zoneType).backgroundColor }]}>
+            <Text style={[styles.zoneChipText, { color: getZoneChipStyle(zoneType).color }]}>
+              {getZoneChipStyle(zoneType).label}
+            </Text>
+          </View>
         </View>
 
         <View style={styles.statsRow}>
@@ -66,18 +103,26 @@ export const FarmDetailScreen = ({ navigation, route }) => {
             <Text style={styles.statValue}>{farm.moisture}</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Last Update</Text>
+            <Text style={styles.statLabel}>Risk</Text>
+            <Text style={styles.statValue}>{farm.droughtRisk || 'High'}</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Last Updated</Text>
             <Text style={styles.statValue}>2 hrs ago</Text>
           </View>
         </View>
 
-        <View style={styles.satelliteCard}>
-          <View style={styles.satelliteHeader}>
-            <Text style={styles.satelliteTitle}>Satellite View (Coming D2)</Text>
-            <Feather name="external-link" size={16} color={materialTheme.colors.textSecondary} />
+        <View style={styles.mapCard}>
+          <Image
+            source={require('../assets/satellite-farm.png')}
+            style={styles.mapImage}
+            resizeMode="cover"
+          />
+          <View style={styles.polygonOverlayContainer}>
+            <View style={styles.diamondPolygon} />
           </View>
-          <View style={styles.satelliteMap}>
-            <Image source={crops[farm.cropType.toLowerCase()] || crops.default} style={styles.satelliteImage} resizeMode="cover" />
+          <View style={styles.mapLegendChip}>
+            <Text style={styles.mapLegendChipText}>Satellite View</Text>
           </View>
         </View>
 
@@ -254,34 +299,47 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: materialTheme.colors.onSurface,
   },
-  satelliteCard: {
+  mapCard: {
     backgroundColor: materialTheme.colors.surface,
-    borderRadius: materialTheme.borderRadius.card,
-    padding: materialTheme.spacing.md,
+    borderRadius: 24,
+    height: 300,
+    width: '100%',
+    overflow: 'hidden',
     marginBottom: materialTheme.spacing.md,
     borderWidth: 1,
     borderColor: materialTheme.colors.outline,
+    position: 'relative',
   },
-  satelliteHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: materialTheme.spacing.sm,
-  },
-  satelliteTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: materialTheme.colors.onSurface,
-  },
-  satelliteMap: {
-    height: 160,
-    borderRadius: materialTheme.borderRadius.md,
-    overflow: 'hidden',
-    backgroundColor: materialTheme.colors.surfaceVariant,
-  },
-  satelliteImage: {
+  mapImage: {
     width: '100%',
     height: '100%',
+  },
+  polygonOverlayContainer: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  diamondPolygon: {
+    width: 140,
+    height: 140,
+    borderWidth: 3,
+    borderColor: '#00FF00',
+    backgroundColor: 'rgba(0, 255, 0, 0.2)',
+    transform: [{ rotate: '45deg' }],
+  },
+  mapLegendChip: {
+    position: 'absolute',
+    top: materialTheme.spacing.sm,
+    right: materialTheme.spacing.sm,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: materialTheme.spacing.sm,
+    paddingVertical: 6,
+    borderRadius: materialTheme.borderRadius.sm,
+  },
+  mapLegendChipText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600',
   },
   trendCard: {
     backgroundColor: materialTheme.colors.surface,

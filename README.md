@@ -1,4 +1,4 @@
-﻿# CropSentinel Mobile 📱
+# CropSentinel Mobile 📱
 ### React Native App | FAR AWAY Hackathon 2026
 Built by Yesh | Branch: yesh/mobile
 
@@ -60,7 +60,12 @@ src/
 
 ## Day by Day Progress
 - D1: Navigation, all screens, mock data, Material 3 theme
-- D2: Satellite map with farm polygon
+- D2: Satellite map with farm polygon [COMPLETE]
+  - Farm boundary visualization (rotated diamond viewport overlay)
+  - Satellite analysis view (high-resolution premium field card layout)
+  - Enhanced Farm Detail screen (integrated dynamic stats: NDVI, Moisture, Risk, Last Updated)
+  - Navigation audit completed (fully operational tab/stack connections)
+  - Asset integration completed (custom agritech leaf and crop elements loaded)
 - D3: Alerts feed, intervention detail with live API
 - D4: Victory Native charts, push notifications
 - D5: Demo mode, animations, polish

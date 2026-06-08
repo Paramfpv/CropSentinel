@@ -214,6 +214,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: materialTheme.colors.outline,
   },
+
   greeting: {
     fontSize: 26,
     fontWeight: '700',
