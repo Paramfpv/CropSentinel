@@ -31,17 +31,12 @@ export const registerForPushNotificationsAsync = async () => {
   }
 
   if (finalStatus !== 'granted') {
-    console.warn('Failed to get push token for push notification!');
+    console.warn('Notification permissions not granted!');
     return { success: false, status: finalStatus };
   }
 
-  try {
-    token = (await Notifications.getExpoPushTokenAsync()).data;
-  } catch (error) {
-    console.warn('Expo push token generation skipped or failed (common in simulator environments):', error);
-  }
-
-  return { success: true, token, status: finalStatus };
+  // Skip remote push token fetching to avoid crashes in Expo Go (which doesn't support remote notifications)
+  return { success: true, token: 'local-demo-token', status: finalStatus };
 };
 
 export const scheduleLocalAlert = async (title, body, data = {}) => {
