@@ -53,7 +53,7 @@ export default function AddFieldScreen({ onNavigate }) {
   };
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)', position:'relative', overflow:'hidden' }}>
+    <div className="content-max" style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)', position:'relative', overflow:'hidden' }}>
       {!isMapOpen && (
         <img src={leavesBottomRight} alt="" style={{ position:'absolute', bottom:0, right:0, width:128, pointerEvents:'none', opacity:0.4, zIndex:0 }} />
       )}

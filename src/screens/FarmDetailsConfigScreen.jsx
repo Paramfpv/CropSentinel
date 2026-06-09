@@ -63,7 +63,7 @@ export default function FarmDetailsConfigScreen({ onNavigate }) {
   };
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)' }}>
+    <div className="content-max" style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)' }}>
 
       {/* ── Header ── */}
       <div style={{ display:'flex', alignItems:'center', gap:14, padding:'20px 20px 12px' }}>

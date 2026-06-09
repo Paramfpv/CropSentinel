@@ -67,41 +67,31 @@ function AppNavigation() {
   const showNav = phase === 'app' && BOTTOM_NAV_SCREENS.includes(screen);
 
   return (
-    <div style={{ minHeight:'100dvh', background:'#000000', display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{
-        width: '100%', maxWidth: '420px', height: '100dvh',
-        background: 'var(--cs-bg)', display: 'flex', flexDirection: 'column',
-        overflow: 'hidden', position: 'relative',
-        boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
-      }}>
-        <main style={{
-          flex: 1, overflowY: 'auto', overflowX: 'hidden',
-          WebkitOverflowScrolling: 'touch',
-          paddingTop: phase === 'app' ? 'env(safe-area-inset-top, 0px)' : 0,
-        }}>
-          {renderScreen()}
-        </main>
+    <div className="app-container">
+      {/* 
+        Note: We use flex-direction: row-reverse in CSS for desktop, 
+        so rendering <main> then <nav> means <nav> appears on the left on desktop! 
+      */}
+      <main className="app-main" style={{ paddingTop: phase === 'app' ? 'var(--safe-top)' : 0 }}>
+        {renderScreen()}
+      </main>
 
-        {showNav && (
-          <nav style={{ flexShrink:0, background:'var(--cs-card)', borderTop:'1px solid var(--cs-border)', display:'flex', justifyContent:'space-around', alignItems:'flex-start', paddingTop:10, paddingBottom:'max(env(safe-area-inset-bottom, 0px), 10px)', minHeight:64 }}>
-            {NAV_ITEMS.map(({ key, Icon, label, badge }) => {
-              const active = screen === key;
-              return (
-                <button key={key} onClick={() => navigate(key)}
-                  style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2, flex:1, justifyContent:'center', position:'relative', border:0, background:'transparent', cursor:'pointer', paddingTop:2 }}>
-                  <div style={{ position:'relative' }}>
-                    <Icon size={20} strokeWidth={active ? 2.5 : 1.8} style={{ color: active ? 'var(--cs-accent)' : 'var(--cs-text-muted)' }} />
-                    {badge && <span style={{ position:'absolute', top:-4, right:-4, width:8, height:8, background:'#DC2626', borderRadius:'50%', border:'2px solid var(--cs-card)' }} />}
-                  </div>
-                  <span style={{ fontSize:10, fontWeight:600, lineHeight:1, color: active ? 'var(--cs-accent)' : 'var(--cs-text-muted)' }}>
-                    {label}
-                  </span>
-                </button>
-              );
-            })}
-          </nav>
-        )}
-      </div>
+      {showNav && (
+        <nav className="app-nav">
+          {NAV_ITEMS.map(({ key, Icon, label, badge }) => {
+            const active = screen === key;
+            return (
+              <button key={key} onClick={() => navigate(key)} className={`nav-item ${active ? 'active' : ''}`}>
+                <div style={{ position:'relative' }}>
+                  <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
+                  {badge && <span style={{ position:'absolute', top:-4, right:-4, width:8, height:8, background:'var(--cs-danger)', borderRadius:'50%', border:'2px solid var(--cs-card)' }} />}
+                </div>
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      )}
     </div>
   );
 }

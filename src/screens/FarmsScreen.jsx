@@ -314,7 +314,7 @@ export default function FarmsScreen({ onNavigate }) {
   };
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%', background:'var(--cs-bg)', overflow:'hidden' }}>
+    <div className="content-max" style={{ display:'flex', flexDirection:'column', height:'100%', background:'var(--cs-bg)', overflow:'hidden' }}>
 
       {/* ── Sticky Header ── */}
       <div style={{ flexShrink:0, padding:'18px 16px 10px', background:'var(--cs-bg)', borderBottom:'1px solid var(--cs-border-soft)' }}>

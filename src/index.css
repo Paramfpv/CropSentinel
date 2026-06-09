@@ -23,16 +23,8 @@
   box-sizing: border-box;
 }
 
-/*
-  Edge-to-Edge rendering:
-  html/body must fill the FULL display including behind the status bar.
-  We then add safe-area padding on the elements that need it (nav, headers)
-  using env(safe-area-inset-*) so nothing hides under a notch or
-  home-indicator bar.
-*/
 html {
   height: 100%;
-  /* Extend background colour into the status-bar zone */
   background-color: #F8F6F0;
 }
 
@@ -41,11 +33,14 @@ body {
   width: 100%;
   margin: 0;
   padding: 0;
-  /* Prevents rubber-band bounce exposing white behind the app on iOS */
   overscroll-behavior: none;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #F8F6F0;
+  color: #1A2416;
 }
 
-/* CSS custom properties for safe-area insets — used by JS/React components */
 :root {
   --safe-top:    env(safe-area-inset-top,    0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -56,76 +51,133 @@ body {
 #root {
   height: 100%;
   width: 100%;
-  /*
-    DO NOT add padding-top here.
-    Each screen is responsible for padding its own content below the
-    status bar using env(safe-area-inset-top) inline.
-    The background of html/body/App already fills behind the status bar.
-  */
   box-sizing: border-box;
   overflow: hidden;
 }
 
-body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: #F8F6F0;
-  color: #1A2416;
+/* Custom scrollbar */
+.scroll-area::-webkit-scrollbar { width: 3px; }
+.scroll-area::-webkit-scrollbar-track { background: transparent; }
+.scroll-area::-webkit-scrollbar-thumb { background-color: #D4D0C8; border-radius: 4px; }
+*::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   RESPONSIVE DESKTOP LAYOUT (Sidebar / Grid)
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Main wrapper */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100dvh;
+  background: var(--cs-bg);
+  overflow: hidden;
+  position: relative;
 }
 
-/* Custom scrollbar — only visible inside scrollable areas */
-.scroll-area::-webkit-scrollbar {
-  width: 3px;
-}
-.scroll-area::-webkit-scrollbar-track {
-  background: transparent;
-}
-.scroll-area::-webkit-scrollbar-thumb {
-  background-color: #D4D0C8;
-  border-radius: 4px;
-}
-*::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+/* Scrollable main content area */
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  position: relative; /* Modals inside will cover this, not the sidebar */
+  background: var(--cs-bg);
 }
 
-/* Status badge colors */
-.badge-danger  { background: #FEE2E2; color: #DC2626; }
-.badge-success { background: #DCFCE7; color: #16A34A; }
-.badge-warning { background: #FEF3C7; color: #D97706; }
-
-/* Circular health score ring */
-.ring-danger  { stroke: #EA580C; }
-.ring-success { stroke: #22C55E; }
-.ring-muted   { stroke: #E5E7EB; }
-
-/* Card shadow */
-.card-shadow {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-}
-.card-shadow-md {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+/* Navigation bar (Bottom on mobile, Left on desktop) */
+.app-nav {
+  flex-shrink: 0;
+  background: var(--cs-card);
+  border-top: 1px solid var(--cs-border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  min-height: 64px;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+  padding-top: 8px;
+  z-index: 50;
 }
 
-/* Green button glow */
-.btn-primary {
-  background: #4A7C59;
-  color: #ffffff;
-  border-radius: 14px;
-  font-weight: 700;
-  font-size: 15px;
-  padding: 14px 24px;
-  width: 100%;
-  transition: all 0.15s ease;
-  border: none;
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  justify-content: center;
   cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--cs-text-muted);
+  transition: color 0.2s;
 }
-.btn-primary:hover {
-  background: #3d6b4a;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(74,124,89,0.35);
+
+.nav-item.active {
+  color: var(--cs-accent);
 }
-.btn-primary:active {
-  transform: translateY(0);
+
+.nav-item span {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Grids & Constrained Forms */
+.desktop-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.content-max {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .app-container {
+    flex-direction: row-reverse; /* Put nav on left? Wait, row-reverse makes it right. */
+  }
+  
+  /* Actually we want nav on left, so flex-direction: row, but nav comes second in DOM?
+     Wait, in App.jsx nav is AFTER main. So let's use flex-direction: row-reverse so nav is on left! 
+     Yes, if DOM is <main><nav>, row-reverse puts nav on left. */
+  .app-container {
+    flex-direction: row-reverse;
+  }
+
+  .app-nav {
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 240px;
+    height: 100%;
+    border-top: none;
+    border-right: 1px solid var(--cs-border);
+    padding-top: 32px;
+  }
+
+  .nav-item {
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-start;
+    padding: 16px 32px;
+    gap: 16px;
+    flex: none;
+  }
+
+  .nav-item span {
+    font-size: 15px !important;
+  }
+
+  .desktop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+
+  .content-max {
+    max-width: 800px;
+    margin: 0 auto;
+  }
 }

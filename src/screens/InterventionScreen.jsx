@@ -15,7 +15,7 @@ export default function InterventionScreen({ onNavigate }) {
   };
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)' }}>
+    <div className="content-max" style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)' }}>
 
       {/* ── Header ── */}
       <div style={{ padding:'22px 20px 10px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>

@@ -104,18 +104,24 @@ export default function FarmsListScreen({ onNavigate }) {
           <div style={{ textAlign:'center', padding:'40px 0' }}>
             <p style={{ fontSize:14, color:'var(--cs-text-muted)', fontWeight:600 }}>No farms match "{query}"</p>
           </div>
-        ) : filtered.map(f => (
-          <FarmCard key={f.id} cropImg={f.cropImg} name={f.name} crop={f.crop}
-            badge={f.badge} badgeBg={f.badgeBg} badgeColor={f.badgeColor}
-            score={f.score} ringColor={f.ringColor} ndvi={f.ndvi}
-            moisture={f.moisture} trend={f.trend}
-            onClick={f.nav ? () => onNavigate(f.nav) : null}
-          />
-        ))}
+        ) : (
+          <div className="desktop-grid">
+            {filtered.map(f => (
+              <FarmCard key={f.id} cropImg={f.cropImg} name={f.name} crop={f.crop}
+                badge={f.badge} badgeBg={f.badgeBg} badgeColor={f.badgeColor}
+                score={f.score} ringColor={f.ringColor} ndvi={f.ndvi}
+                moisture={f.moisture} trend={f.trend}
+                onClick={f.nav ? () => onNavigate(f.nav) : null}
+              />
+            ))}
+          </div>
+        )}
         <button onClick={() => onNavigate('add_field')} style={{
-          width:'100%', background:'#4A7C59', color:'white', fontWeight:700,
+          width:'100%', maxWidth: 400, margin: '16px auto 0',
+          background:'var(--cs-accent)', color:'white', fontWeight:700,
           fontSize:14, padding:'14px 24px', borderRadius:16, border:'none',
-          cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginTop:4,
+          cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+          fontFamily:'inherit'
         }}>
           <Plus size={16} strokeWidth={2.5} /> Add New Field
         </button>

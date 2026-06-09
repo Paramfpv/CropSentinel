@@ -217,7 +217,7 @@ export default function SettingsScreen({ onNavigate }) {
   const themeKey = isDark ? 'dark' : 'light';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: 'var(--cs-bg)', position: 'relative', overflow: 'hidden' }}>
+    <div className="content-max" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: 'var(--cs-bg)', position: 'relative', overflow: 'hidden' }}>
       <img src={settingsLeaves} alt="" style={{ position: 'absolute', top: 0, right: 0, width: 112, pointerEvents: 'none', opacity: 0.5, zIndex: 0 }} />
 
       {/* Header */}

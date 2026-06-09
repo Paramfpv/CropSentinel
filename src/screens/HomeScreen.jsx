@@ -170,41 +170,45 @@ export default function HomeScreen({ onNavigate }) {
           </div>
         </div>
 
-        <FarmCard
-          cropImg={wheatImg}
-          name="North Field"
-          crop="Wheat"
-          badge="Drought Risk"
-          badgeBg="#FEE2E2"
-          badgeColor="#DC2626"
-          score={crisis ? 32 : 72}
-          ringColor={crisis ? '#EF4444' : '#EA580C'}
-          ndvi={crisis ? '0.21' : '0.61'}
-          moisture="Low"
-          trend={crisis ? trendDown : trendUp}
-          onClick={() => onNavigate('farm_detail')}
-        />
+        <div className="desktop-grid">
+          <FarmCard
+            cropImg={wheatImg}
+            name="North Field"
+            crop="Wheat"
+            badge="Drought Risk"
+            badgeBg="#FEE2E2"
+            badgeColor="#DC2626"
+            score={crisis ? 32 : 72}
+            ringColor={crisis ? '#EF4444' : '#EA580C'}
+            ndvi={crisis ? '0.21' : '0.61'}
+            moisture="Low"
+            trend={crisis ? trendDown : trendUp}
+            onClick={() => onNavigate('farm_detail')}
+          />
 
-        <FarmCard
-          cropImg={riceImg}
-          name="South Field"
-          crop="Rice"
-          badge="Healthy"
-          badgeBg="#DCFCE7"
-          badgeColor="#16A34A"
-          score={88}
-          ringColor="#22C55E"
-          ndvi="0.72"
-          moisture="Optimal"
-          trend={[{v:0.60},{v:0.63},{v:0.68},{v:0.70},{v:0.72}]}
-          onClick={() => onNavigate('farms')}
-        />
+          <FarmCard
+            cropImg={riceImg}
+            name="South Field"
+            crop="Rice"
+            badge="Healthy"
+            badgeBg="#DCFCE7"
+            badgeColor="#16A34A"
+            score={88}
+            ringColor="#22C55E"
+            ndvi="0.72"
+            moisture="Optimal"
+            trend={[{v:0.60},{v:0.63},{v:0.68},{v:0.70},{v:0.72}]}
+            onClick={() => onNavigate('farms')}
+          />
+        </div>
 
         {/* Add New Field */}
         <button
           onClick={() => onNavigate('add_field')}
           style={{
             width:'100%',
+            maxWidth: 400,
+            margin: '16px auto 0',
             background:'var(--cs-accent)',
             color:'#FFFFFF',
             fontWeight:700,
@@ -217,7 +221,6 @@ export default function HomeScreen({ onNavigate }) {
             alignItems:'center',
             justifyContent:'center',
             gap:8,
-            marginTop:4,
             fontFamily:'inherit',
           }}
         >

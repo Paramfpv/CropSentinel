@@ -118,7 +118,7 @@ export default function AlertsScreen() {
   const dismissOne  = (id, e) => { e.stopPropagation(); setAlerts(prev => prev.filter(a => a.id !== id)); };
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)' }}>
+    <div className="content-max" style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)' }}>
       {/* Header */}
       <div style={{ padding:'24px 20px 12px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
         <div>
