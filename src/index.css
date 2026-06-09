@@ -160,22 +160,6 @@ body {
   height: 144px;
 }
 
-.auth-wrapper {
-  position: absolute;
-  inset: 0;
-  background: var(--cs-bg);
-}
-
-.auth-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  background: var(--cs-bg);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
 @media (min-width: 768px) {
   .app-container {
     flex-direction: row-reverse; /* Put nav on left? Wait, row-reverse makes it right. */
@@ -264,28 +248,5 @@ body {
 
   .chart-container {
     height: 350px;
-  }
-
-  .auth-wrapper {
-    position: absolute;
-    inset: 0;
-    background: var(--cs-border-soft);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .auth-container {
-    width: 100%;
-    max-width: 440px;
-    height: 95%;
-    max-height: 900px;
-    border-radius: 40px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-    position: relative;
-    overflow: hidden;
-    background: var(--cs-bg);
-    display: flex;
-    flex-direction: column;
   }
 }

@@ -16,8 +16,12 @@ export default function LoginScreen({ onLogin }) {
   };
 
   return (
-    <div className="auth-wrapper">
-    <div className="auth-container" style={{ overflowY: 'auto' }}>
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: 'var(--cs-bg)',
+      display: 'flex', flexDirection: 'column',
+      overflowY: 'auto', overflowX: 'hidden',
+    }}>
       <img src={leavesTopRight} alt="" style={{
         position: 'absolute', top: 0, right: 0, width: 112,
         pointerEvents: 'none', userSelect: 'none', zIndex: 0, opacity: 0.6,
@@ -164,7 +168,6 @@ export default function LoginScreen({ onLogin }) {
           <span style={{ fontWeight:700, color:'var(--cs-accent)', cursor:'pointer' }}>Create Account</span>
         </p>
       </div>
-    </div>
     </div>
   );
 }
