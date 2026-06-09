@@ -136,6 +136,30 @@ body {
   width: 100%;
 }
 
+.desktop-grid, .desktop-grid-large {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.desktop-split {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.desktop-only {
+  display: none;
+}
+
+.mobile-only {
+  display: block;
+}
+
+.chart-container {
+  height: 144px;
+}
+
 @media (min-width: 768px) {
   .app-container {
     flex-direction: row-reverse; /* Put nav on left? Wait, row-reverse makes it right. */
@@ -174,10 +198,55 @@ body {
   .desktop-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .desktop-grid-large {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+  }
+
+  .desktop-split {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 32px;
+  }
+
+  .desktop-split > * {
+    flex: 1;
+    min-width: 0; /* Prevent flex children from overflowing */
+  }
+
+  .desktop-split-2-1 > :first-child {
+    flex: 2;
+  }
+  .desktop-split-2-1 > :last-child {
+    flex: 1;
+  }
+
+  .dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 0 32px;
   }
 
   .content-max {
     max-width: 800px;
     margin: 0 auto;
+  }
+
+  .desktop-only {
+    display: block;
+  }
+
+  .mobile-only {
+    display: none;
+  }
+
+  .chart-container {
+    height: 350px;
   }
 }

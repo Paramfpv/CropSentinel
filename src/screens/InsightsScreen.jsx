@@ -48,66 +48,70 @@ export default function InsightsScreen() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display:'flex', gap:8, padding:'0 20px 16px' }}>
-        {TABS.map((tabLabel, i) => (
+      <div style={{ display:'flex', gap:10, padding:'0 20px 20px', overflowX:'auto', WebkitOverflowScrolling:'touch', flexShrink:0 }}>
+        {['NDVI (Health)', 'Soil Moisture', 'Temperature'].map((tabLabel, i) => (
           <button key={tabLabel} onClick={() => setTab(i)} style={{
-            padding:'6px 14px', borderRadius:20, fontSize:11, fontWeight:700, border:'none',
-            background: i === tab ? 'var(--cs-accent)' : 'var(--cs-card)',
-            color:       i === tab ? '#FFFFFF'          : 'var(--cs-text-sec)',
-            boxShadow:   i === tab ? 'none' : '0 1px 3px var(--cs-shadow)',
-            border:      i === tab ? 'none' : '1px solid var(--cs-border)',
-            cursor: 'pointer', fontFamily:'inherit', transition:'all 0.2s',
+            background: tab === i ? 'var(--cs-accent)' : 'var(--cs-card)',
+            color:      tab === i ? '#FFFFFF' : 'var(--cs-text-muted)',
+            border:     `1px solid ${tab === i ? 'var(--cs-accent)' : 'var(--cs-border-soft)'}`,
+            padding:    '8px 16px', borderRadius:20, fontSize:12, fontWeight:700,
+            cursor:'pointer', whiteSpace:'nowrap', transition:'all 0.2s',
+            boxShadow:  tab === i ? '0 2px 8px rgba(74,124,89,0.3)' : 'none',
           }}>
             {tabLabel}
           </button>
         ))}
       </div>
 
-      {/* Chart card */}
-      <div style={{ margin:'0 20px 16px', background:'var(--cs-card)', borderRadius:24, padding:16, boxShadow:'0 1px 4px var(--cs-shadow)', border:'1px solid var(--cs-border-soft)' }}>
-        <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:12 }}>
-          <div>
-            <p style={{ fontSize:10, color:'var(--cs-text-muted)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em', margin:0 }}>{TABS[tab]}</p>
-            <p style={{ fontSize:28, fontWeight:900, color:'var(--cs-text)', lineHeight:1.1, margin:'2px 0 0' }}>{label}</p>
-          </div>
-          <span style={{ fontSize:12, fontWeight:700, color:'var(--cs-accent)', background:'var(--cs-accent-light)', padding:'4px 10px', borderRadius:20 }}>
-            {change} vs last 7 days
-          </span>
-        </div>
-        <div style={{ height:144 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top:5, right:5, bottom:0, left:-20 }}>
-              <defs>
-                <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor={color} stopOpacity={0.25} />
-                  <stop offset="100%" stopColor={color} stopOpacity={0}    />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--cs-border)" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize:9, fill:'var(--cs-text-muted)' }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fontSize:9, fill:'var(--cs-text-muted)' }} tickLine={false} axisLine={false} />
-              <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="v" stroke={color} strokeWidth={2.5} fill="url(#areaGrad)" dot={{ r:3, fill:color, strokeWidth:0 }} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* AI Insights */}
-      <div style={{ padding:'0 20px 24px' }}>
-        <h2 style={{ fontSize:14, fontWeight:700, color:'var(--cs-text)', marginBottom:12 }}>AI Insights</h2>
-        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-          {INSIGHTS.map(({ icon: Icon, color, bg, title, sub }) => (
-            <div key={title} style={{ background:'var(--cs-card)', borderRadius:20, padding:16, boxShadow:'0 1px 4px var(--cs-shadow)', border:'1px solid var(--cs-border-soft)', display:'flex', alignItems:'flex-start', gap:12 }}>
-              <div style={{ width:36, height:36, borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background:bg }}>
-                <Icon size={16} strokeWidth={2} style={{ color }} />
-              </div>
-              <div>
-                <p style={{ fontSize:13, fontWeight:700, color:'var(--cs-text)', lineHeight:1.3, margin:0 }}>{title}</p>
-                <p style={{ fontSize:11, color:'var(--cs-text-muted)', fontWeight:500, margin:'3px 0 0' }}>{sub}</p>
-              </div>
+      {/* Content */}
+      <div className="desktop-split desktop-split-2-1" style={{ flex:1, overflowY:'auto', padding:'0 20px', WebkitOverflowScrolling:'touch' }}>
+        
+        {/* Chart card (Left side on desktop) */}
+        <div style={{ background:'var(--cs-card)', borderRadius:24, padding:16, boxShadow:'0 1px 4px var(--cs-shadow)', border:'1px solid var(--cs-border-soft)' }}>
+          <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:12 }}>
+            <div>
+              <p style={{ fontSize:10, color:'var(--cs-text-muted)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em', margin:0 }}>{TABS[tab]}</p>
+              <p style={{ fontSize:28, fontWeight:900, color:'var(--cs-text)', lineHeight:1.1, margin:'2px 0 0' }}>{label}</p>
             </div>
-          ))}
+            <span style={{ fontSize:12, fontWeight:700, color:'var(--cs-accent)', background:'var(--cs-accent-light)', padding:'4px 10px', borderRadius:20 }}>
+              {change} vs last 7 days
+            </span>
+          </div>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data} margin={{ top:5, right:5, bottom:0, left:-20 }}>
+                <defs>
+                  <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor={color} stopOpacity={0.25} />
+                    <stop offset="100%" stopColor={color} stopOpacity={0}    />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--cs-border)" vertical={false} />
+                <XAxis dataKey="date" tick={{ fontSize:9, fill:'var(--cs-text-muted)' }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize:9, fill:'var(--cs-text-muted)' }} tickLine={false} axisLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Area type="monotone" dataKey="v" stroke={color} strokeWidth={2.5} fill="url(#areaGrad)" dot={{ r:3, fill:color, strokeWidth:0 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* AI Insights (Right side on desktop) */}
+        <div style={{ paddingBottom:24 }}>
+          <h2 style={{ fontSize:14, fontWeight:700, color:'var(--cs-text)', marginBottom:12 }}>AI Insights</h2>
+          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+            {INSIGHTS.map(({ icon: Icon, color, bg, title, sub }) => (
+              <div key={title} style={{ background:'var(--cs-card)', borderRadius:20, padding:16, boxShadow:'0 1px 4px var(--cs-shadow)', border:'1px solid var(--cs-border-soft)', display:'flex', alignItems:'flex-start', gap:12 }}>
+                <div style={{ width:36, height:36, borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background:bg }}>
+                  <Icon size={16} strokeWidth={2} style={{ color }} />
+                </div>
+                <div>
+                  <p style={{ fontSize:13, fontWeight:700, color:'var(--cs-text)', lineHeight:1.3, margin:0 }}>{title}</p>
+                  <p style={{ fontSize:11, color:'var(--cs-text-muted)', fontWeight:500, margin:'3px 0 0' }}>{sub}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

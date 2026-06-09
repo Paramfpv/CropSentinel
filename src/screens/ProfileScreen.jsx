@@ -19,7 +19,7 @@ export default function ProfileScreen({ onNavigate }) {
   const [email] = useState('ramesh@example.com');
 
   return (
-    <div className="content-max" style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)', paddingBottom:24 }}>
+    <div className="dashboard-container" style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)', paddingBottom:32 }}>
       {/* Header */}
       <div style={{ padding:'24px 20px 12px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <h1 style={{ fontSize:22, fontWeight:900, color:'var(--cs-text)', margin:0 }}>Profile</h1>
@@ -29,8 +29,11 @@ export default function ProfileScreen({ onNavigate }) {
         </button>
       </div>
 
-      {/* Profile banner */}
-      <div style={{ margin:'0 20px 20px', background:'#4A7C59', borderRadius:28, padding:20, position:'relative', overflow:'hidden' }}>
+      <div className="desktop-split" style={{ padding: '0 20px' }}>
+        {/* Left Side: Profile Banner */}
+        <div style={{ flex: 1 }}>
+          {/* Profile banner */}
+      <div style={{ marginBottom: 20, background:'#4A7C59', borderRadius:28, padding:20, position:'relative', overflow:'hidden' }}>
         <img src={profileLeaves} alt="" style={{ position:'absolute', right:0, bottom:0, height:'100%', objectFit:'contain', opacity:0.2, pointerEvents:'none' }} />
         <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'center', gap:16 }}>
           {/* Avatar */}
@@ -66,9 +69,12 @@ export default function ProfileScreen({ onNavigate }) {
           </div>
         </div>
       </div>
+      </div>
 
-      {/* Menu */}
-      <div style={{ margin:'0 20px', background:'var(--cs-card)', borderRadius:24, border:'1px solid var(--cs-border-soft)', overflow:'hidden', boxShadow:'0 1px 4px var(--cs-shadow)' }}>
+      {/* Right Side: Menu & Logout */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Menu */}
+        <div style={{ background:'var(--cs-card)', borderRadius:24, border:'1px solid var(--cs-border-soft)', overflow:'hidden', boxShadow:'0 1px 4px var(--cs-shadow)' }}>
         {MENU.map(({ icon: Icon, label, screen }, i) => (
           <button key={label} onClick={() => onNavigate(screen)}
             style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'15px 16px', borderBottom: i < MENU.length-1 ? '1px solid var(--cs-bg)' : 'none', background:'none', cursor:'pointer', transition:'background 0.15s', fontFamily:'inherit' }}
@@ -87,13 +93,15 @@ export default function ProfileScreen({ onNavigate }) {
       </div>
 
       {/* Logout */}
-      <div style={{ margin:'16px 20px 0' }}>
+      <div>
         <button
           onClick={() => onNavigate('welcome')}
           style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'14px', background:'var(--cs-danger-light)', border:'1px solid var(--cs-danger-border)', borderRadius:18, fontSize:14, fontWeight:700, color:'var(--cs-danger)', cursor:'pointer', fontFamily:'inherit' }}
         >
           <LogOut size={16} /> Log Out
         </button>
+      </div>
+      </div>
       </div>
     </div>
   );

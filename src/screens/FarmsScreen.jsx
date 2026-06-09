@@ -314,12 +314,11 @@ export default function FarmsScreen({ onNavigate }) {
   };
 
   return (
-    <div className="content-max" style={{ display:'flex', flexDirection:'column', height:'100%', background:'var(--cs-bg)', overflow:'hidden' }}>
+    <div className="dashboard-container" style={{ display:'flex', flexDirection:'column', height:'100%', background:'var(--cs-bg)', overflow:'hidden' }}>
 
       {/* ── Sticky Header ── */}
       <div style={{ flexShrink:0, padding:'18px 16px 10px', background:'var(--cs-bg)', borderBottom:'1px solid var(--cs-border-soft)' }}>
-        {/* Top row */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <button onClick={() => onNavigate('home')}
             style={{ width:34, height:34, borderRadius:'50%', background:'var(--cs-card)', border:'1px solid var(--cs-border-soft)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 1px 4px var(--cs-shadow)' }}>
             <ArrowLeft size={16} strokeWidth={2.2} style={{ color:'var(--cs-text)' }} />
@@ -329,43 +328,52 @@ export default function FarmsScreen({ onNavigate }) {
             <Settings2 size={15} strokeWidth={1.8} style={{ color:'var(--cs-text-sec)' }} />
           </button>
         </div>
-
-        {/* Farm selector */}
-        <button onClick={() => setShowSheet(true)}
-          style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'12px 14px', background:'var(--cs-card)', border:'1px solid var(--cs-border-soft)', borderRadius:18, cursor:'pointer', boxShadow:'0 1px 4px var(--cs-shadow)', fontFamily:'inherit', marginBottom:12 }}>
-          <img src={farm.img} alt={farm.crop} style={{ width:36, height:36, objectFit:'contain' }} />
-          <div style={{ textAlign:'left', flex:1 }}>
-            <p style={{ fontSize:15, fontWeight:900, color:'var(--cs-text)', margin:0 }}>{farm.name}</p>
-            <p style={{ fontSize:11, color:'var(--cs-text-muted)', margin:0, fontWeight:500 }}>{farm.crop}</p>
-          </div>
-          <ChevronDown size={18} style={{ color:'var(--cs-text-muted)' }} />
-        </button>
-
-        {/* Tab bar */}
-        <div style={{ display:'flex', gap:0, background:'var(--cs-bg)', borderRadius:14, border:'1px solid var(--cs-border-soft)', overflow:'hidden' }}>
-          {TABS.map((tab, i) => (
-            <button key={tab} onClick={() => setActiveTab(i)}
-              style={{ flex:1, padding:'9px 0', border:'none', cursor:'pointer', fontFamily:'inherit', transition:'all 0.18s',
-                background: i === activeTab ? 'var(--cs-accent)' : 'transparent',
-                color:      i === activeTab ? '#FFFFFF' : 'var(--cs-text-muted)',
-                fontSize: 11, fontWeight: 700,
-                borderRight: i < TABS.length-1 ? '1px solid var(--cs-border-soft)' : 'none',
-              }}>
-              {tab}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* ── Scrollable content ── */}
-      <div style={{ flex:1, overflowY:'auto', padding:'12px 14px 0', WebkitOverflowScrolling:'touch' }}>
-        {renderTab()}
+      <div className="desktop-split" style={{ flex:1, minHeight:0, padding:'16px', overflowY:'hidden' }}>
+        
+        {/* Left Side (Scrollable) */}
+        <div style={{ display:'flex', flexDirection:'column', height:'100%', overflowY:'auto', WebkitOverflowScrolling:'touch', paddingRight:8 }}>
+          
+          <button onClick={() => setShowSheet(true)}
+            style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'12px 14px', background:'var(--cs-card)', border:'1px solid var(--cs-border-soft)', borderRadius:18, cursor:'pointer', boxShadow:'0 1px 4px var(--cs-shadow)', fontFamily:'inherit', marginBottom:12, flexShrink:0 }}>
+            <img src={farm.img} alt={farm.crop} style={{ width:36, height:36, objectFit:'contain' }} />
+            <div style={{ textAlign:'left', flex:1 }}>
+              <p style={{ fontSize:15, fontWeight:900, color:'var(--cs-text)', margin:0 }}>{farm.name}</p>
+              <p style={{ fontSize:11, color:'var(--cs-text-muted)', margin:0, fontWeight:500 }}>{farm.crop}</p>
+            </div>
+            <ChevronDown size={18} style={{ color:'var(--cs-text-muted)' }} />
+          </button>
 
-        {/* Bottom CTA */}
-        <button onClick={() => onNavigate('intervention')}
-          style={{ width:'100%', background:'var(--cs-accent)', color:'#FFFFFF', fontWeight:800, fontSize:15, padding:'16px', borderRadius:18, border:'none', cursor:'pointer', boxShadow:'0 4px 16px rgba(74,124,89,0.35)', fontFamily:'inherit', letterSpacing:'0.1px', marginBottom:24 }}>
-          View Intervention
-        </button>
+          <div style={{ display:'flex', gap:0, background:'var(--cs-bg)', borderRadius:14, border:'1px solid var(--cs-border-soft)', overflow:'hidden', marginBottom:16, flexShrink:0 }}>
+            {TABS.map((tab, i) => (
+              <button key={tab} onClick={() => setActiveTab(i)}
+                className={i === 1 ? 'mobile-only' : ''}
+                style={{ flex:1, padding:'9px 0', border:'none', cursor:'pointer', fontFamily:'inherit', transition:'all 0.18s',
+                  background: i === activeTab ? 'var(--cs-accent)' : 'transparent',
+                  color:      i === activeTab ? '#FFFFFF' : 'var(--cs-text-muted)',
+                  fontSize: 11, fontWeight: 700,
+                  borderRight: i < TABS.length-1 ? '1px solid var(--cs-border-soft)' : 'none',
+                }}>
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ flex: 1 }}>
+            {renderTab()}
+            
+            <button onClick={() => onNavigate('intervention')}
+              style={{ width:'100%', background:'var(--cs-accent)', color:'#FFFFFF', fontWeight:800, fontSize:15, padding:'16px', borderRadius:18, border:'none', cursor:'pointer', boxShadow:'0 4px 16px rgba(74,124,89,0.35)', fontFamily:'inherit', letterSpacing:'0.1px', margin:'24px 0' }}>
+              View Intervention
+            </button>
+          </div>
+        </div>
+
+        {/* Right Side Map (Desktop only) */}
+        <div className="desktop-only" style={{ height:'100%', borderRadius:24, overflow:'hidden', border:'1px solid var(--cs-border-soft)', boxShadow:'0 4px 20px var(--cs-shadow-md)', background:'var(--cs-card)' }}>
+          <SatelliteTab farm={farm} />
+        </div>
       </div>
 
       {/* ── Farm selector sheet ── */}

@@ -118,7 +118,7 @@ export default function AlertsScreen() {
   const dismissOne  = (id, e) => { e.stopPropagation(); setAlerts(prev => prev.filter(a => a.id !== id)); };
 
   return (
-    <div className="content-max" style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)' }}>
+    <div className="dashboard-container" style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)' }}>
       {/* Header */}
       <div style={{ padding:'24px 20px 12px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
         <div>
@@ -150,7 +150,7 @@ export default function AlertsScreen() {
       </div>
 
       {/* Alert list */}
-      <div style={{ flex:1, padding:'0 20px 24px', display:'flex', flexDirection:'column', gap:10 }}>
+      <div className="desktop-grid-large" style={{ flex:1, padding:'0 20px 24px' }}>
         {displayed.length === 0 ? (
           <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'48px 0', gap:12 }}>
             <Bell size={40} style={{ color:'#D4D0C8' }} />
