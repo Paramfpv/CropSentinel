@@ -17,6 +17,7 @@ import { AccountSettingsScreen } from './src/screens/AccountSettingsScreen';
 import { NotificationSettingsScreen } from './src/screens/NotificationSettingsScreen';
 import { HelpSupportScreen } from './src/screens/HelpSupportScreen';
 import { AboutScreen } from './src/screens/AboutScreen';
+import { LocationPickerScreen } from './src/screens/LocationPickerScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -58,6 +59,7 @@ export default function App() {
             <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
             <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
             <Stack.Screen name="About" component={AboutScreen} />
+            <Stack.Screen name="LocationPicker" component={LocationPickerScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </>

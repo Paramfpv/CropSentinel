@@ -55,7 +55,7 @@ export const AddFieldScreen = ({ navigation, route }) => {
   const [cropType, setCropType] = useState('');
   const [fieldArea, setFieldArea] = useState('');
   const [soilType, setSoilType] = useState('');
-  const [location, setLocation] = useState('');
+  const [location, setLocation] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
@@ -64,9 +64,19 @@ export const AddFieldScreen = ({ navigation, route }) => {
       setCropType(farmToEdit.cropType || 'Sugarcane');
       setFieldArea(farmToEdit.area || '5.0');
       setSoilType(farmToEdit.soilType || 'Clay');
-      setLocation(farmToEdit.location || 'Maharashtra');
+      setLocation({
+        latitude: 19.8762,
+        longitude: 75.3433
+      });
     }
   }, [farmToEdit]);
+
+  // Hook to receive coordinates from LocationPickerScreen
+  useEffect(() => {
+    if (route.params?.selectedLocation) {
+      setLocation(route.params.selectedLocation);
+    }
+  }, [route.params?.selectedLocation]);
 
   const handleSave = () => {
     if (!fieldName.trim()) {
@@ -81,11 +91,19 @@ export const AddFieldScreen = ({ navigation, route }) => {
       Alert.alert("Validation Error", "Please select a soil type.");
       return;
     }
-    if (!location) {
-      Alert.alert("Validation Error", "Please select a location.");
+    if (!location || !location.latitude || !location.longitude) {
+      Alert.alert("Validation Error", "Please select farm location coordinates.");
       return;
     }
 
+    const payload = {
+      farm_name: fieldName.trim(),
+      crop_type: cropType,
+      latitude: parseFloat(location.latitude.toFixed(4)),
+      longitude: parseFloat(location.longitude.toFixed(4))
+    };
+
+    console.log("D6 Backend Payload:", JSON.stringify(payload, null, 2));
     setShowSuccess(true);
   };
 
@@ -147,13 +165,24 @@ export const AddFieldScreen = ({ navigation, route }) => {
           placeholder="Choose soil type"
         />
 
-        <DropdownSelector
-          label="Location"
-          value={location}
-          options={["Maharashtra", "Punjab", "Karnataka", "Tamil Nadu"]}
-          onSelect={setLocation}
-          placeholder="Select location"
-        />
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>Location Coordinates</Text>
+          <TouchableOpacity 
+            style={styles.fieldSelect} 
+            onPress={() => navigation.navigate('LocationPicker')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.fieldSelectLeft}>
+              <Feather name="map-pin" size={16} color={materialTheme.colors.textSecondary} style={{ marginRight: 6 }} />
+              <Text style={[styles.fieldSelectText, location && { color: materialTheme.colors.onSurface }]}>
+                {location 
+                  ? `Lat: ${location.latitude.toFixed(4)}, Lon: ${location.longitude.toFixed(4)}` 
+                  : "Choose Farm Location"}
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={materialTheme.colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
           <Text style={styles.saveBtnText}>{isEditMode ? "Update Farm" : "Save Field"}</Text>
@@ -174,6 +203,19 @@ export const AddFieldScreen = ({ navigation, route }) => {
                 ? "Your farm has been updated successfully." 
                 : "Your farm has been added successfully."}
             </Text>
+            
+            <View style={styles.payloadBox}>
+              <Text style={styles.payloadTitle}>Prepared D6 Payload:</Text>
+              <Text style={styles.payloadText}>
+                {JSON.stringify({
+                  farm_name: fieldName.trim(),
+                  crop_type: cropType,
+                  latitude: parseFloat(location.latitude.toFixed(4)),
+                  longitude: parseFloat(location.longitude.toFixed(4))
+                }, null, 2)}
+              </Text>
+            </View>
+
             <TouchableOpacity 
               style={styles.modalBtn} 
               onPress={() => {
@@ -255,6 +297,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  fieldSelectLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   fieldSelectText: {
     fontSize: 15,
     color: materialTheme.colors.textSecondary,
@@ -312,7 +358,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   modalContent: {
-    width: 300,
+    width: 310,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 24,
@@ -342,8 +388,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666666',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
     lineHeight: 20,
+  },
+  payloadBox: {
+    backgroundColor: '#F5F5F0',
+    borderRadius: 8,
+    padding: 12,
+    width: '100%',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E5E5E0',
+  },
+  payloadTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#666666',
+    marginBottom: 4,
+  },
+  payloadText: {
+    fontSize: 11,
+    fontFamily: 'monospace',
+    color: '#333333',
   },
   modalBtn: {
     width: '100%',
