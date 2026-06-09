@@ -266,7 +266,7 @@ function WeatherTab({ farm }) {
 ══════════════════════════════════════════════════════════════════════════ */
 function FarmSelectorSheet({ farms, selectedId, onSelect, onClose }) {
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:200, display:'flex', alignItems:'flex-end' }}
+    <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', zIndex:200, display:'flex', alignItems:'flex-end' }}
       onClick={onClose}>
       <div style={{ width:'100%', maxWidth:420, margin:'0 auto', background:'var(--cs-card)', borderRadius:'26px 26px 0 0', padding:'20px 20px 36px', boxShadow:'0 -4px 30px rgba(0,0,0,0.25)' }}
         onClick={e => e.stopPropagation()}>

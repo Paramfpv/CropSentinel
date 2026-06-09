@@ -53,7 +53,14 @@ export const DARK = {
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    return localStorage.getItem('cs-theme') === 'dark';
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('cs-theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
+
   const vars = isDark ? DARK : LIGHT;
 
   return (

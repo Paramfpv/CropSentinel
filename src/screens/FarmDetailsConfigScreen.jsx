@@ -9,7 +9,7 @@ const ndviTrend = [{ v: 0.58 }, { v: 0.62 }, { v: 0.64 }, { v: 0.65 }, { v: 0.66
 /* ─── Edit-mode modal sheet ─────────────────────────────────────────────── */
 function EditModal({ farmName, setFarmName, location, setLocation, area, setArea, onClose, onSave, saved }) {
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:100, display:'flex', alignItems:'flex-end' }}
+    <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.5)', zIndex:100, display:'flex', alignItems:'flex-end' }}
       onClick={onClose}>
       <div onClick={e => e.stopPropagation()}
         style={{ width:'100%', maxWidth:420, margin:'0 auto', background:'var(--cs-card)', borderRadius:'28px 28px 0 0', padding:'24px 20px 40px', boxShadow:'0 -4px 30px rgba(0,0,0,0.2)' }}>

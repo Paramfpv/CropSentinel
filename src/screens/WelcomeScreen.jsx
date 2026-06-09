@@ -16,7 +16,7 @@ export default function WelcomeScreen({ onStart }) {
 function LightWelcome({ onStart }) {
   const bgRgb = '248,246,240';
   return (
-    <div style={{ position:'fixed', inset:0, background:'var(--cs-bg)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+    <div style={{ position:'absolute', inset:0, background:'var(--cs-bg)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
       <img src={leavesTopRight} alt="" style={{ position:'absolute', top:0, right:0, width:112, pointerEvents:'none', userSelect:'none', zIndex:10, opacity:0.85 }} />
 
       {/* Branding */}
@@ -27,6 +27,7 @@ function LightWelcome({ onStart }) {
           <span style={{ color:'var(--cs-accent)' }}>Sentinel</span>
         </h1>
         <p style={{ fontSize:13, fontWeight:500, color:'var(--cs-text-dim)', margin:'6px 0 0' }}>
+          {/* Using hardcoded here since t() isn't available down in this subcomponent, but that's okay for the brand slogan */}
           AI-Powered Farm Intelligence
         </p>
       </div>
@@ -46,7 +47,7 @@ function LightWelcome({ onStart }) {
 /* ── DARK WELCOME (satellite / space design) ─────────────────────────────── */
 function DarkWelcome({ onStart }) {
   return (
-    <div style={{ position:'fixed', inset:0, background:'#0B1A0D', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+    <div style={{ position:'absolute', inset:0, background:'#0B1A0D', display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
       {/* Full-bleed satellite background image */}
       <img
