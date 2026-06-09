@@ -96,8 +96,8 @@ export const MyFarmsScreen = ({ navigation }) => {
         if (dashData.farm) {
           const singleFarm = {
             id: String(dashData.farm.id || 1),
-            name: dashData.farm.name || 'Vidarbha Cotton Farm',
-            cropType: dashData.farm.crop_type || 'cotton',
+            name: dashData.farm.name || 'Marathwada Sugarcane Farm',
+            cropType: dashData.farm.crop_type || 'sugarcane',
             healthScore: dashData.farm_health_score ?? 72,
             ndvi: dashData.ndvi ?? 0.21,
             moisture: `${dashData.soil_moisture ?? 18}%`,

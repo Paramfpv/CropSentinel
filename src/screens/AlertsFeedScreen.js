@@ -36,7 +36,7 @@ export const AlertsFeedScreen = ({ navigation }) => {
         const title = isNewContract ? item.message : (item.title || item.action || 'Attention Needed');
         const time = isNewContract ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (item.timestamp || item.time || 'Recent');
         const description = isNewContract ? `Status: ${item.status || 'sent'}` : (item.description || (item.cost_inr ? `Estimated intervention cost: ₹${item.cost_inr}` : ''));
-        const farmName = isNewContract ? 'Vidarbha Cotton Farm' : (item.farm_name || item.farmName || 'Farm Alert');
+        const farmName = isNewContract ? 'Marathwada Sugarcane Farm' : (item.farm_name || item.farmName || 'Farm Alert');
         
         let severity = item.severity || 'medium';
         let icon = 'alert-circle';
