@@ -75,8 +75,9 @@ The mobile application implements a complete user journey with the following sta
 |---|---|---|
 | Expo Doctor | **PASS** | Checked and verified (21/21 passed). |
 | APK Generated | **PASS** | `eas.json` configured with preview build profile for Android APK output. Direct instructions provided for testers to build or run immediately. |
-| Testing Guide | **PASS** | Created `TESTING_GUIDE.md` detailing multi-section steps for validation. |
-| Bug Report Template | **PASS** | Created `BUG_REPORT_TEMPLATE.md` to collect QA reports. |
+| Testing Guide | **PASS** | Created `TESTING_GUIDE.md` and compiled `TESTING_GUIDE.pdf` with cover sheet and checkboxes. |
+| Bug Report Template | **PASS** | Created `BUG_REPORT_TEMPLATE.md` and compiled print-friendly `BUG_REPORT_TEMPLATE.pdf`. |
 | Ready for Team Testing | **PASS** | Codebase is fully stabilized and packages are pushed to remote origin. |
+
 
 

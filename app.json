@@ -25,6 +25,14 @@
           "resizeMode": "contain"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7d0a067d-e0c4-415f-a7ce-2d085db61167"
+      }
+    },
+    "android": {
+      "package": "com.yeshbind.faraway"
+    }
   }
 }
