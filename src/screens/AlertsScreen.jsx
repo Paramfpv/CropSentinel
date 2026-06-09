@@ -56,19 +56,18 @@ function AlertDetailModal({ alert, onClose }) {
   return (
     <div style={{
       position:'fixed', inset:0, background:'var(--cs-shadow)',
-      zIndex:1000, display:'flex', alignItems:'flex-end',
+      zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center',
+      padding: '20px'
     }} onClick={onClose}>
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background:'var(--cs-bg)', borderRadius:'28px 28px 0 0',
-          padding:'24px 20px 40px', width:'100%', maxHeight:'80dvh',
-          overflowY:'auto',
-          boxShadow:'0 -4px 30px rgba(0,0,0,0.15)',
+          width:'100%', maxWidth: 500, background:'var(--cs-bg)',
+          borderRadius:28,
+          padding:'28px 24px',
+          maxHeight: '90vh', overflowY: 'auto'
         }}
       >
-        {/* Handle */}
-        <div style={{ width:40, height:4, background:'#E8E4D8', borderRadius:2, margin:'0 auto 20px' }} />
 
         {/* Icon + Title */}
         <div style={{ display:'flex', alignItems:'flex-start', gap:12, marginBottom:16 }}>
@@ -119,24 +118,26 @@ export default function AlertsScreen() {
 
   return (
     <div className="dashboard-container" style={{ display:'flex', flexDirection:'column', minHeight:'100%', background:'var(--cs-bg)' }}>
-      {/* Header */}
-      <div style={{ padding:'24px 20px 12px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-        <div>
-          <h1 style={{ fontSize:22, fontWeight:900, color:'var(--cs-text)', margin:0 }}>Alerts</h1>
-          {unreadCount > 0
-            ? <p style={{ fontSize:11, fontWeight:700, color:'#DC2626', margin:'4px 0 0' }}>{unreadCount} Unread Alert{unreadCount>1?'s':''}</p>
-            : <p style={{ fontSize:11, fontWeight:600, color:'var(--cs-text-muted)', margin:'4px 0 0' }}>All caught up!</p>
-          }
+      {/* Header & Tabs Container */}
+      <div className="content-max" style={{ width: '100%', margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ padding:'24px 20px 12px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+          <div>
+            <h1 style={{ fontSize:22, fontWeight:900, color:'var(--cs-text)', margin:0 }}>Alerts</h1>
+            {unreadCount > 0
+              ? <p style={{ fontSize:11, fontWeight:700, color:'#DC2626', margin:'4px 0 0' }}>{unreadCount} Unread Alert{unreadCount>1?'s':''}</p>
+              : <p style={{ fontSize:11, fontWeight:600, color:'var(--cs-text-muted)', margin:'4px 0 0' }}>All caught up!</p>
+            }
+          </div>
+          {activeTab === 'Active' && activeAlerts.length > 0 && (
+            <button onClick={clearActive} style={{ display:'flex', alignItems:'center', gap:5, background:'#FFF5F5', border:'1px solid #FEE2E2', borderRadius:10, padding:'6px 12px', fontSize:12, fontWeight:700, color:'#DC2626', cursor:'pointer' }}>
+              <Trash2 size={12} /> Clear All
+            </button>
+          )}
         </div>
-        {activeTab === 'Active' && activeAlerts.length > 0 && (
-          <button onClick={clearActive} style={{ display:'flex', alignItems:'center', gap:5, background:'#FFF5F5', border:'1px solid #FEE2E2', borderRadius:10, padding:'6px 12px', fontSize:12, fontWeight:700, color:'#DC2626', cursor:'pointer' }}>
-            <Trash2 size={12} /> Clear All
-          </button>
-        )}
-      </div>
 
-      {/* Tabs */}
-      <div style={{ display:'flex', gap:8, padding:'0 20px 12px' }}>
+        {/* Tabs */}
+        <div style={{ display:'flex', gap:8, padding:'0 20px 12px' }}>
         {['Active','History'].map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding:'7px 18px', borderRadius:999, fontSize:12, fontWeight:700, cursor:'pointer', border:'none',
@@ -147,10 +148,11 @@ export default function AlertsScreen() {
             {tab} {tab==='Active' && activeAlerts.length > 0 && `(${activeAlerts.length})`}
           </button>
         ))}
+        </div>
       </div>
 
       {/* Alert list */}
-      <div className="desktop-grid-large" style={{ flex:1, padding:'0 20px 24px' }}>
+      <div className="content-max" style={{ flex:1, width:'100%', display:'flex', flexDirection:'column', gap:16, padding:'0 20px 32px', margin:'0 auto' }}>
         {displayed.length === 0 ? (
           <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'48px 0', gap:12 }}>
             <Bell size={40} style={{ color:'#D4D0C8' }} />
