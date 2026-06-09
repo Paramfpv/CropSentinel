@@ -16,7 +16,8 @@ export default function WelcomeScreen({ onStart }) {
 function LightWelcome({ onStart }) {
   const bgRgb = '248,246,240';
   return (
-    <div style={{ position:'absolute', inset:0, background:'var(--cs-bg)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+    <div className="auth-wrapper">
+    <div className="auth-container">
       <img src={leavesTopRight} alt="" style={{ position:'absolute', top:0, right:0, width:112, pointerEvents:'none', userSelect:'none', zIndex:10, opacity:0.85 }} />
 
       {/* Branding */}
@@ -41,13 +42,15 @@ function LightWelcome({ onStart }) {
         </div>
       </div>
     </div>
+    </div>
   );
 }
 
 /* ── DARK WELCOME (satellite / space design) ─────────────────────────────── */
 function DarkWelcome({ onStart }) {
   return (
-    <div style={{ position:'absolute', inset:0, background:'#0B1A0D', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+    <div className="auth-wrapper">
+    <div className="auth-container" style={{ background:'#0B1A0D' }}>
 
       {/* Full-bleed satellite background image */}
       <img
@@ -94,6 +97,7 @@ function DarkWelcome({ onStart }) {
           Secure. Smart. Sustainable.
         </p>
       </div>
+    </div>
     </div>
   );
 }
