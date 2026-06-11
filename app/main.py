@@ -15,6 +15,30 @@ app = FastAPI(
     version="0.1"
 )
 
+@app.on_event("startup")
+async def startup_event():
+    """
+    Validates that all critical third-party API keys are loaded on startup.
+    Halts application execution with RuntimeError if credentials are missing.
+    """
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    required_vars = ["COPERNICUS_CLIENT_ID", "COPERNICUS_CLIENT_SECRET", "GROQ_API_KEY"]
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    
+    if missing_vars:
+        error_message = (
+            f"\n======================================================================\n"
+            f"CRITICAL STARTUP ERROR: Missing required environment variables:\n"
+            f"  {', '.join(missing_vars)}\n"
+            f"Please configure them in your environment or .env file before starting.\n"
+            f"======================================================================\n"
+        )
+        print(error_message, flush=True)
+        raise RuntimeError(error_message)
+
 # Register routers
 app.include_router(health_router)
 app.include_router(dashboard_router)

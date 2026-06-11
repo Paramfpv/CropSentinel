@@ -9,10 +9,8 @@ from datetime import datetime, timedelta
 import requests
 from dotenv import load_dotenv
 
-# Load environment variables from .env.example
-base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-dotenv_path = os.path.join(base_dir, ".env.example")
-load_dotenv(dotenv_path=dotenv_path)
+# Load environment variables
+load_dotenv()
 
 def get_copernicus_token() -> str:
     """
