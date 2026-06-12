@@ -1,17 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import { materialTheme } from '../theme';
+import * as Haptics from 'expo-haptics';
 
-const DropdownSelector = ({ label, value, options, onSelect, placeholder }) => {
+import { materialTheme } from '../theme';
+import { useDemoState } from '../config/demoState';
+import { translations } from '../constants/translations';
+
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
+
+const triggerHapticSuccess = async () => {
+  try {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  } catch (e) {}
+};
+
+const DropdownSelector = ({ label, value, options, onSelect, placeholder, t }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <View style={styles.fieldGroup}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <TouchableOpacity 
         style={styles.fieldSelect} 
-        onPress={() => setIsOpen(!isOpen)}
+        onPress={() => {
+          triggerHapticSelection();
+          setIsOpen(!isOpen);
+        }}
         activeOpacity={0.7}
       >
         <Text style={[styles.fieldSelectText, value && { color: materialTheme.colors.onSurface }]}>
@@ -30,6 +49,7 @@ const DropdownSelector = ({ label, value, options, onSelect, placeholder }) => {
                 idx === options.length - 1 && { borderBottomWidth: 0 }
               ]}
               onPress={() => {
+                triggerHapticSelection();
                 onSelect(opt);
                 setIsOpen(false);
               }}
@@ -48,6 +68,9 @@ const DropdownSelector = ({ label, value, options, onSelect, placeholder }) => {
 };
 
 export const AddFieldScreen = ({ navigation, route }) => {
+  const { language } = useDemoState();
+  const t = translations[language] || translations.en;
+
   const farmToEdit = route.params?.farm;
   const isEditMode = !!farmToEdit;
 
@@ -58,41 +81,63 @@ export const AddFieldScreen = ({ navigation, route }) => {
   const [location, setLocation] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Animated values for custom modal
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
   useEffect(() => {
     if (isEditMode) {
       setFieldName(farmToEdit.name || '');
       setCropType(farmToEdit.cropType || 'Sugarcane');
       setFieldArea(farmToEdit.area || '5.0');
       setSoilType(farmToEdit.soilType || 'Clay');
-      setLocation({
-        latitude: 19.8762,
-        longitude: 75.3433
-      });
+      setLocation(
+        farmToEdit.latitude && farmToEdit.longitude 
+          ? { latitude: farmToEdit.latitude, longitude: farmToEdit.longitude }
+          : { latitude: 19.8762, longitude: 75.3433 }
+      );
     }
   }, [farmToEdit]);
 
-  // Hook to receive coordinates from LocationPickerScreen
   useEffect(() => {
     if (route.params?.selectedLocation) {
       setLocation(route.params.selectedLocation);
     }
   }, [route.params?.selectedLocation]);
 
+  useEffect(() => {
+    if (showSuccess) {
+      triggerHapticSuccess();
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [showSuccess]);
+
   const handleSave = () => {
     if (!fieldName.trim()) {
-      Alert.alert("Validation Error", "Please enter a farm name.");
+      Alert.alert(t.validationError, t.enterFarmName);
       return;
     }
     if (!cropType) {
-      Alert.alert("Validation Error", "Please select a crop type.");
+      Alert.alert(t.validationError, t.enterCropType);
       return;
     }
     if (!soilType) {
-      Alert.alert("Validation Error", "Please select a soil type.");
+      Alert.alert(t.validationError, t.enterSoilType);
       return;
     }
     if (!location || !location.latitude || !location.longitude) {
-      Alert.alert("Validation Error", "Please select farm location coordinates.");
+      Alert.alert(t.validationError, t.enterCoordinates);
       return;
     }
 
@@ -107,13 +152,49 @@ export const AddFieldScreen = ({ navigation, route }) => {
     setShowSuccess(true);
   };
 
+  const handleViewDetails = () => {
+    triggerHapticSelection();
+    setShowSuccess(false);
+    
+    // Create new/updated farm object to pass to detail screen
+    const farmObject = {
+      id: farmToEdit?.id || 'temp_new_farm',
+      name: fieldName.trim(),
+      cropType: cropType,
+      healthScore: farmToEdit?.healthScore || 85,
+      ndvi: farmToEdit?.ndvi || 0.68,
+      moisture: farmToEdit?.moisture || '45%',
+      riskSeverity: farmToEdit?.riskSeverity || 'low',
+      zoneType: farmToEdit?.zoneType || 'healthy',
+      latitude: parseFloat(location.latitude.toFixed(4)),
+      longitude: parseFloat(location.longitude.toFixed(4)),
+      area: fieldArea || '5.0',
+      soilType: soilType,
+      location: farmToEdit?.location || `${cropType} Zone`,
+    };
+
+    navigation.replace('FarmDetail', { farm: farmObject });
+  };
+
+  const handleCloseSuccess = () => {
+    triggerHapticSelection();
+    setShowSuccess(false);
+    navigation.goBack();
+  };
+
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity 
+          onPress={() => {
+            triggerHapticSelection();
+            navigation.goBack();
+          }} 
+          style={styles.backBtn}
+        >
           <Feather name="arrow-left" size={22} color={materialTheme.colors.onSurface} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{isEditMode ? "Edit Farm" : "Add New Field"}</Text>
+        <Text style={styles.headerTitle}>{isEditMode ? t.updateFarm : t.addNewField}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -123,7 +204,7 @@ export const AddFieldScreen = ({ navigation, route }) => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Farm Name</Text>
+          <Text style={styles.fieldLabel}>{t.farmNameLabel}</Text>
           <TextInput
             style={styles.fieldInput}
             placeholder="e.g., North Field"
@@ -137,15 +218,16 @@ export const AddFieldScreen = ({ navigation, route }) => {
         </View>
 
         <DropdownSelector
-          label="Select Crop Type"
+          label={t.selectCropType}
           value={cropType}
           options={["Wheat", "Rice", "Corn", "Sugarcane"]}
           onSelect={setCropType}
-          placeholder="Choose crop"
+          placeholder={t.chooseCrop}
+          t={t}
         />
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Field Area (Acres)</Text>
+          <Text style={styles.fieldLabel}>{t.fieldAreaLabel}</Text>
           <TextInput
             style={styles.fieldInput}
             placeholder="e.g., 5.2"
@@ -158,18 +240,22 @@ export const AddFieldScreen = ({ navigation, route }) => {
         </View>
 
         <DropdownSelector
-          label="Soil Type"
+          label={t.soilTypeLabel}
           value={soilType}
           options={["Sandy", "Clay", "Loamy", "Silty"]}
           onSelect={setSoilType}
-          placeholder="Choose soil type"
+          placeholder={t.chooseSoil}
+          t={t}
         />
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Location Coordinates</Text>
+          <Text style={styles.fieldLabel}>{t.locationCoordinates}</Text>
           <TouchableOpacity 
             style={styles.fieldSelect} 
-            onPress={() => navigation.navigate('LocationPicker')}
+            onPress={() => {
+              triggerHapticSelection();
+              navigation.navigate('LocationPicker');
+            }}
             activeOpacity={0.7}
           >
             <View style={styles.fieldSelectLeft}>
@@ -177,55 +263,62 @@ export const AddFieldScreen = ({ navigation, route }) => {
               <Text style={[styles.fieldSelectText, location && { color: materialTheme.colors.onSurface }]}>
                 {location 
                   ? `Lat: ${location.latitude.toFixed(4)}, Lon: ${location.longitude.toFixed(4)}` 
-                  : "Choose Farm Location"}
+                  : t.chooseLocation}
               </Text>
             </View>
             <Feather name="chevron-right" size={18} color={materialTheme.colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
-          <Text style={styles.saveBtnText}>{isEditMode ? "Update Farm" : "Save Field"}</Text>
+        <TouchableOpacity 
+          style={styles.saveBtn} 
+          onPress={() => {
+            triggerHapticSelection();
+            handleSave();
+          }} 
+          activeOpacity={0.8}
+        >
+          <Text style={styles.saveBtnText}>{isEditMode ? t.updateFarm : t.saveField}</Text>
         </TouchableOpacity>
       </ScrollView>
 
       {showSuccess && (
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <Animated.View style={[
+            styles.modalContent,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }]
+            }
+          ]}>
             <View style={styles.successIconContainer}>
               <Feather name="check" size={32} color="#FFFFFF" />
             </View>
             <Text style={styles.modalTitle}>
-              {isEditMode ? "Farm Updated" : "Farm Added"}
+              {isEditMode ? t.farmUpdated : t.farmAdded}
             </Text>
             <Text style={styles.modalBody}>
-              {isEditMode 
-                ? "Your farm has been updated successfully." 
-                : "Your farm has been added successfully."}
+              {isEditMode ? t.farmUpdatedSuccess : t.farmSavedSuccess}
             </Text>
-            
-            <View style={styles.payloadBox}>
-              <Text style={styles.payloadTitle}>Prepared D6 Payload:</Text>
-              <Text style={styles.payloadText}>
-                {JSON.stringify({
-                  farm_name: fieldName.trim(),
-                  crop_type: cropType,
-                  latitude: parseFloat(location.latitude.toFixed(4)),
-                  longitude: parseFloat(location.longitude.toFixed(4))
-                }, null, 2)}
-              </Text>
-            </View>
 
-            <TouchableOpacity 
-              style={styles.modalBtn} 
-              onPress={() => {
-                setShowSuccess(false);
-                navigation.goBack();
-              }}
-            >
-              <Text style={styles.modalBtnText}>OK</Text>
-            </TouchableOpacity>
-          </View>
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={styles.modalPrimaryBtn} 
+                onPress={handleViewDetails}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.modalPrimaryBtnText}>{t.viewDetails}</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.modalSecondaryBtn} 
+                onPress={handleCloseSuccess}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalSecondaryBtnText}>{t.done}</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
         </View>
       )}
     </SafeAreaView>
@@ -358,68 +451,69 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   modalContent: {
-    width: 310,
+    width: 320,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 28, // Material 3 Spec for Dialogs
     padding: 24,
     alignItems: 'center',
     shadowColor: '#000000',
     shadowOpacity: 0.15,
-    shadowRadius: 10,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 8,
   },
   successIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#22C55E',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: materialTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: 8,
+    marginBottom: 10,
+    textAlign: 'center',
   },
   modalBody: {
     fontSize: 14,
     color: '#666666',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
     lineHeight: 20,
   },
-  payloadBox: {
-    backgroundColor: '#F5F5F0',
-    borderRadius: 8,
-    padding: 12,
+  modalActions: {
     width: '100%',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#E5E5E0',
+    gap: 8,
   },
-  payloadTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#666666',
-    marginBottom: 4,
-  },
-  payloadText: {
-    fontSize: 11,
-    fontFamily: 'monospace',
-    color: '#333333',
-  },
-  modalBtn: {
+  modalPrimaryBtn: {
     width: '100%',
-    backgroundColor: '#267D32',
+    backgroundColor: materialTheme.colors.primary,
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  modalBtnText: {
+  modalPrimaryBtnText: {
     color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  modalSecondaryBtn: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: materialTheme.colors.outline,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalSecondaryBtnText: {
+    color: materialTheme.colors.primary,
     fontSize: 15,
     fontWeight: '700',
   },

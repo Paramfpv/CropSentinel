@@ -3,22 +3,32 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Dimensions
 import { Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Polyline, Circle, Line as SvgLine, Text as SvgText } from 'react-native-svg';
+import * as Haptics from 'expo-haptics';
 
 import { materialTheme } from '../theme';
 import { crops } from '../assets';
 import { fetchDashboard, getNdviHistory, getMarketHistory } from '../services';
 import { LoadingState } from '../components/LoadingState';
-import { ErrorState } from '../components/ErrorState';
 import { useDemoState } from '../config/demoState';
 import { DemoBanner } from '../components/DemoBanner';
 import { scheduleLocalAlert } from '../services/notifications';
 import { translations } from '../constants/translations';
 
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
 
+const triggerHapticWarning = async () => {
+  try {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  } catch (e) {}
+};
 
 const getHealthColor = (score) => {
-  if (score >= 80) return materialTheme.colors.success;
-  if (score >= 60) return materialTheme.colors.warning;
+  if (score >= 75) return materialTheme.colors.success;
+  if (score >= 50) return materialTheme.colors.warning;
   return materialTheme.colors.error;
 };
 
@@ -58,9 +68,9 @@ const AnimatedNumber = ({ value }) => {
   return <Text style={styles.healthScore}>{displayVal}</Text>;
 };
 
-// Pure SVG sparkline chart — zero gesture-handler/reanimated dependency
+// Pure SVG sparkline chart
 const SvgSparkline = ({ data, labels, color, fallbackText, formatValue }) => {
-  const W = Dimensions.get('window').width - 80; // card padding
+  const W = Dimensions.get('window').width - 80;
   const H = 120;
   const PAD_LEFT = 36;
   const PAD_RIGHT = 8;
@@ -88,19 +98,16 @@ const SvgSparkline = ({ data, labels, color, fallbackText, formatValue }) => {
 
   return (
     <Svg width={W} height={H}>
-      {/* Baseline */}
       <SvgLine
         x1={PAD_LEFT} y1={PAD_TOP + chartH}
         x2={PAD_LEFT + chartW} y2={PAD_TOP + chartH}
         stroke={materialTheme.colors.outline} strokeWidth={1}
       />
-      {/* Left axis */}
       <SvgLine
         x1={PAD_LEFT} y1={PAD_TOP}
         x2={PAD_LEFT} y2={PAD_TOP + chartH}
         stroke={materialTheme.colors.outline} strokeWidth={1}
       />
-      {/* Sparkline */}
       <Polyline
         points={points}
         fill="none"
@@ -109,7 +116,6 @@ const SvgSparkline = ({ data, labels, color, fallbackText, formatValue }) => {
         strokeLinejoin="round"
         strokeLinecap="round"
       />
-      {/* Dots + value labels */}
       {data.map((v, i) => (
         <React.Fragment key={i}>
           <Circle cx={toX(i)} cy={toY(v)} r={3.5} fill={color} />
@@ -126,7 +132,6 @@ const SvgSparkline = ({ data, labels, color, fallbackText, formatValue }) => {
           )}
         </React.Fragment>
       ))}
-      {/* X-axis labels */}
       {labels.map((label, i) => (
         <SvgText
           key={`lbl-${i}`}
@@ -139,7 +144,6 @@ const SvgSparkline = ({ data, labels, color, fallbackText, formatValue }) => {
           {label}
         </SvgText>
       ))}
-      {/* Y-axis min/max */}
       <SvgText x={PAD_LEFT - 2} y={PAD_TOP + 4} fontSize={9} fill={materialTheme.colors.textSecondary} textAnchor="end">
         {formatValue ? formatValue(maxVal) : maxVal}
       </SvgText>
@@ -150,10 +154,10 @@ const SvgSparkline = ({ data, labels, color, fallbackText, formatValue }) => {
   );
 };
 
-
 export const FarmDetailScreen = ({ navigation, route }) => {
   const { isDemoMode, isDroughtSimulated, setDroughtSimulated, language } = useDemoState();
   const t = translations[language] || translations.en;
+  
   const [dashboardData, setDashboardData] = useState(null);
   const [ndviData, setNdviData] = useState([]);
   const [marketData, setMarketData] = useState([]);
@@ -234,7 +238,7 @@ export const FarmDetailScreen = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => { triggerHapticSelection(); navigation.goBack(); }} style={styles.backBtn}>
             <Feather name="arrow-left" size={22} color={materialTheme.colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Loading...</Text>
@@ -250,39 +254,63 @@ export const FarmDetailScreen = ({ navigation, route }) => {
       return {
         backgroundColor: '#DCFCE7',
         color: materialTheme.colors.success,
-        label: 'Healthy',
+        label: t.healthy,
       };
     }
     if (type === 'drought' || type.includes('drought')) {
       return {
         backgroundColor: '#FEE2E2',
         color: materialTheme.colors.error,
-        label: 'Drought',
-      };
-    }
-    if (type === 'water stress' || type === 'water_stress' || type.includes('water') || type.includes('stress')) {
-      return {
-        backgroundColor: '#FEF3C7',
-        color: materialTheme.colors.warning,
-        label: 'Water Stress',
+        label: t.critical,
       };
     }
     return {
-      backgroundColor: materialTheme.colors.primaryContainer,
-      color: materialTheme.colors.primary,
-      label: zoneType ? zoneType.charAt(0).toUpperCase() + zoneType.slice(1) : 'Unknown',
+      backgroundColor: '#FEF3C7',
+      color: materialTheme.colors.warning,
+      label: t.warning,
     };
+  };
+
+  const handleSimulateDrought = async () => {
+    triggerHapticWarning();
+    setDroughtSimulated(true);
+    await scheduleLocalAlert(
+      "CropSentinel Alert",
+      "Critical drought stress detected at Marathwada Sugarcane Farm. Immediate intervention recommended."
+    );
+    Alert.alert(
+      t.droughtSimulatedAlert,
+      t.droughtSimulatedMsg,
+      [{ text: t.ok }]
+    );
+  };
+
+  const handleTabPress = (route) => {
+    triggerHapticSelection();
+    navigation.navigate(route);
   };
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <DemoBanner />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity 
+          onPress={() => {
+            triggerHapticSelection();
+            navigation.goBack();
+          }} 
+          style={styles.backBtn}
+        >
           <Feather name="arrow-left" size={22} color={materialTheme.colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{farmData.name}</Text>
-        <TouchableOpacity style={styles.settingsBtn} onPress={() => navigation.navigate('Settings')}>
+        <TouchableOpacity 
+          style={styles.settingsBtn} 
+          onPress={() => {
+            triggerHapticSelection();
+            navigation.navigate('Settings');
+          }}
+        >
           <Feather name="settings" size={20} color={materialTheme.colors.textSecondary} />
         </TouchableOpacity>
       </View>
@@ -291,13 +319,13 @@ export const FarmDetailScreen = ({ navigation, route }) => {
         {error && (
           <View style={styles.errorBanner}>
             <Feather name="alert-circle" size={14} color={materialTheme.colors.error} style={{ marginRight: 6 }} />
-            <Text style={styles.errorBannerText}>{error} Using offline fallback data.</Text>
+            <Text style={styles.errorBannerText}>{error}</Text>
           </View>
         )}
 
         <View style={styles.cropHeroCard}>
           <View style={styles.cropHeroInfo}>
-            <Text style={styles.cropHeroLabel}>Crop Type</Text>
+            <Text style={styles.cropHeroLabel}>{t.cropTypeLabel}</Text>
             <Text style={styles.cropHeroType}>{farmData.cropType}</Text>
           </View>
           <Image
@@ -308,7 +336,7 @@ export const FarmDetailScreen = ({ navigation, route }) => {
         </View>
 
         <View style={styles.healthCard}>
-          <Text style={styles.healthCardLabel}>Health Score</Text>
+          <Text style={styles.healthCardLabel}>{t.healthScore}</Text>
           <View style={[styles.healthCircle, { borderColor: getHealthColor(farmData.healthScore) }]}>
             <AnimatedNumber value={farmData.healthScore} />
             <Text style={styles.healthDivider}>/100</Text>
@@ -322,24 +350,24 @@ export const FarmDetailScreen = ({ navigation, route }) => {
 
         <View style={styles.lastUpdatedContainer}>
           <Feather name="clock" size={12} color={materialTheme.colors.textSecondary} style={{ marginRight: 4 }} />
-          <Text style={styles.lastUpdatedText}>Last Updated: {farmData.lastUpdated}</Text>
+          <Text style={styles.lastUpdatedText}>{t.lastUpdatedLabel}: {farmData.lastUpdated}</Text>
         </View>
 
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Text style={styles.statLabel}>NDVI</Text>
+            <Text style={styles.statLabel}>{t.avgNDVI}</Text>
             <Text style={styles.statValue}>{farmData.ndvi}</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Moisture</Text>
+            <Text style={styles.statLabel}>{t.avgMoisture}</Text>
             <Text style={styles.statValue}>{farmData.moisture}</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Weather Risk</Text>
+            <Text style={styles.statLabel}>{t.weatherRisk}</Text>
             <Text style={styles.statValue}>{farmData.weatherRisk}</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Market Risk</Text>
+            <Text style={styles.statLabel}>{t.marketRisk}</Text>
             <Text style={styles.statValue}>{farmData.marketRisk}</Text>
           </View>
         </View>
@@ -358,10 +386,9 @@ export const FarmDetailScreen = ({ navigation, route }) => {
           </View>
         </View>
 
-
         <View style={styles.trendCard}>
           <View style={styles.trendHeader}>
-            <Text style={styles.trendTitle}>NDVI Trend (Last 7 Days)</Text>
+            <Text style={styles.trendTitle}>{t.ndviTrendTitle}</Text>
             <Text style={styles.trendValue}>{farmData.ndvi}</Text>
           </View>
           <View style={styles.chartContainer}>
@@ -377,7 +404,7 @@ export const FarmDetailScreen = ({ navigation, route }) => {
 
         <View style={styles.trendCard}>
           <View style={styles.trendHeader}>
-            <Text style={styles.trendTitle}>Mandi Price Trend</Text>
+            <Text style={styles.trendTitle}>{t.priceTrend}</Text>
             <Text style={styles.trendValue}>
               {marketData.length > 0 ? `₹${marketData[marketData.length - 1].price}` : '₹6,500'}
             </Text>
@@ -396,48 +423,45 @@ export const FarmDetailScreen = ({ navigation, route }) => {
         {isDemoMode && (
           <TouchableOpacity 
             style={[styles.simulateBtn, isDroughtSimulated && styles.simulateBtnDisabled]} 
-            onPress={async () => {
-              setDroughtSimulated(true);
-              await scheduleLocalAlert(
-                "CropSentinel Alert",
-                "Critical drought stress detected at Marathwada Sugarcane Farm. Immediate intervention recommended."
-              );
-              Alert.alert(
-                "Simulation Event Triggered",
-                "Drought simulation successfully triggered on Marathwada Sugarcane Farm. Visual conditions, NDVI charts, and alert status are updated.",
-                [{ text: "OK" }]
-              );
-            }}
+            onPress={handleSimulateDrought}
+            disabled={isDroughtSimulated}
           >
             <Text style={styles.simulateBtnText}>
-              {isDroughtSimulated ? "Drought Simulated" : "Simulate Drought"}
+              {isDroughtSimulated ? t.droughtSimulated : t.simulateDrought}
             </Text>
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.navigate('InterventionDetail', { farmId: farmData.id })}>
-          <Text style={styles.primaryBtnText}>View Intervention</Text>
+        <TouchableOpacity 
+          style={styles.primaryBtn} 
+          onPress={() => {
+            triggerHapticSelection();
+            navigation.navigate('InterventionDetail', { farmId: farmData.id });
+          }}
+        >
+          <Text style={styles.primaryBtnText}>{t.viewIntervention}</Text>
         </TouchableOpacity>
       </ScrollView>
 
+      {/* Bottom Nav */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('MyFarms')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('MyFarms')}>
           <Feather name="home" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.home}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItemActive} onPress={() => navigation.navigate('Farms')}>
+        <TouchableOpacity style={styles.bottomNavItemActive} onPress={() => handleTabPress('Farms')}>
           <Feather name="layers" size={20} color={materialTheme.colors.primary} />
           <Text style={[styles.bottomNavText, styles.bottomNavTextActive]}>{t.farms}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('InterventionDetail')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('InterventionDetail')}>
           <Feather name="bar-chart-2" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.insights}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('AlertsFeed')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('AlertsFeed')}>
           <Feather name="bell" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.alerts}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('Settings')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('Settings')}>
           <Feather name="user" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.profile}</Text>
         </TouchableOpacity>
@@ -550,10 +574,6 @@ const styles = StyleSheet.create({
     color: materialTheme.colors.textSecondary,
     marginTop: -4,
   },
-  riskLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
   statsRow: {
     flexDirection: 'row',
     gap: materialTheme.spacing.sm,
@@ -569,19 +589,20 @@ const styles = StyleSheet.create({
     borderColor: materialTheme.colors.outline,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: materialTheme.colors.textSecondary,
     marginBottom: 4,
+    textAlign: 'center',
   },
   statValue: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     color: materialTheme.colors.onSurface,
   },
   mapCard: {
     backgroundColor: materialTheme.colors.surface,
     borderRadius: 24,
-    height: 300,
+    height: 200,
     width: '100%',
     overflow: 'hidden',
     marginBottom: materialTheme.spacing.md,
@@ -599,8 +620,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   diamondPolygon: {
-    width: 140,
-    height: 140,
+    width: 100,
+    height: 100,
     borderWidth: 3,
     borderColor: '#00FF00',
     backgroundColor: 'rgba(0, 255, 0, 0.2)',
@@ -644,18 +665,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: materialTheme.colors.primary,
   },
-  trendChart: {
-    height: 60,
-    backgroundColor: materialTheme.colors.surfaceVariant,
-    borderRadius: materialTheme.borderRadius.sm,
-  },
-  trendLine: {
-    flex: 1,
-    margin: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: materialTheme.colors.primary,
-    opacity: 0.5,
-  },
   primaryBtn: {
     backgroundColor: materialTheme.colors.primaryDark,
     borderRadius: materialTheme.borderRadius.button,
@@ -679,6 +688,7 @@ const styles = StyleSheet.create({
     paddingBottom: materialTheme.spacing.md,
     borderTopWidth: 1,
     borderTopColor: materialTheme.colors.outline,
+    zIndex: 100,
   },
   bottomNavItem: {
     alignItems: 'center',
@@ -729,12 +739,6 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: materialTheme.spacing.md,
   },
-  noDataText: {
-    fontSize: 12,
-    color: materialTheme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 40,
-  },
   simulateBtn: {
     backgroundColor: '#F59E0B',
     borderRadius: materialTheme.borderRadius.button,
@@ -748,6 +752,17 @@ const styles = StyleSheet.create({
   simulateBtnText: {
     color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '700',
+  },
+  zoneChip: {
+    alignSelf: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: materialTheme.borderRadius.chip,
+    marginTop: materialTheme.spacing.sm,
+  },
+  zoneChipText: {
+    fontSize: 12,
     fontWeight: '700',
   },
 });

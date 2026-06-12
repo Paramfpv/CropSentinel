@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, RefreshControl, Image, Animated, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
 import { materialTheme } from '../theme';
 import { illustrations } from '../assets';
 import { fetchAlerts } from '../services';
@@ -9,6 +11,12 @@ import { LoadingState } from '../components/LoadingState';
 import { ErrorState } from '../components/ErrorState';
 import { useDemoState } from '../config/demoState';
 import { translations } from '../constants/translations';
+
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
 
 const FadeInCard = ({ children, delay = 0 }) => {
   const animatedValue = React.useRef(new Animated.Value(0)).current;
@@ -59,7 +67,6 @@ export const AlertsFeedScreen = ({ navigation }) => {
         throw new Error('No alerts data received');
       }
       
-      // Map mock API fields to screen variables
       const mapped = (data || []).map(item => {
         const isNewContract = item.message !== undefined;
         
@@ -73,8 +80,7 @@ export const AlertsFeedScreen = ({ navigation }) => {
         let icon = 'alert-circle';
         let iconColor = materialTheme.colors.warning;
         
-        // Compute icon and severity
-        if (idStr === '1' || severity === 'high') {
+        if (idStr === '1' || idStr === '100' || severity === 'high') {
           severity = 'high';
           icon = 'fire';
           iconColor = materialTheme.colors.error;
@@ -88,11 +94,26 @@ export const AlertsFeedScreen = ({ navigation }) => {
           iconColor = materialTheme.colors.warning;
         }
         
+        // Translate title and description for mock alerts in Hindi
+        let translatedTitle = title;
+        let translatedDesc = description;
+        if (language === 'hi') {
+          if (title.includes('Critical drought stress')) {
+            translatedTitle = 'गंभीर सूखा तनाव का पता चला।';
+          } else if (title.includes('Increase irrigation')) {
+            translatedTitle = 'अगले 5 दिनों में सिंचाई 20% बढ़ाएं';
+          }
+          
+          if (description.includes('Status: sent')) {
+            translatedDesc = 'स्थिति: भेजा गया';
+          }
+        }
+        
         return {
           id: idStr,
-          farmName,
-          title,
-          description,
+          farmName: language === 'hi' && farmName.includes('Marathwada') ? 'मराठवाड़ा गन्ना फार्म' : farmName,
+          title: translatedTitle,
+          description: translatedDesc,
           time,
           severity,
           icon,
@@ -118,13 +139,18 @@ export const AlertsFeedScreen = ({ navigation }) => {
     loadAlerts(true);
   }, []);
 
+  const handleTabPress = (route) => {
+    triggerHapticSelection();
+    navigation.navigate(route);
+  };
+
   if (loading && !refreshing && alerts.length === 0) {
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t.alerts}</Text>
         </View>
-        <LoadingState message="Fetching alerts..." />
+        <LoadingState message={language === 'hi' ? 'अलर्ट लोड हो रहे हैं...' : 'Fetching alerts...'} />
       </SafeAreaView>
     );
   }
@@ -140,12 +166,14 @@ export const AlertsFeedScreen = ({ navigation }) => {
     );
   }
 
-
   const renderItem = ({ item, index }) => (
     <FadeInCard delay={index * 120}>
       <TouchableOpacity
         style={[styles.alertCard, { borderLeftColor: item.iconColor }]}
-        onPress={() => navigation.navigate('InterventionDetail', { alertId: item.id })}
+        onPress={() => {
+          triggerHapticSelection();
+          navigation.navigate('InterventionDetail', { alertId: item.id });
+        }}
       >
         <View style={[styles.alertIconCircle, { backgroundColor: item.iconColor + '15' }]}>
           <MaterialCommunityIcons name={item.icon} size={20} color={item.iconColor} />
@@ -162,15 +190,17 @@ export const AlertsFeedScreen = ({ navigation }) => {
     </FadeInCard>
   );
 
+  const activeAlertsText = language === 'hi'
+    ? `${alerts.length} सक्रिय अलर्ट`
+    : `${alerts.length} Active Alert${alerts.length !== 1 ? 's' : ''}`;
+
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t.alerts}</Text>
         {!loading && (
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>
-              {alerts.length} Active Alert{alerts.length !== 1 ? 's' : ''}
-            </Text>
+            <Text style={styles.badgeText}>{activeAlertsText}</Text>
           </View>
         )}
       </View>
@@ -178,13 +208,17 @@ export const AlertsFeedScreen = ({ navigation }) => {
       {loading ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={materialTheme.colors.primary} />
-          <Text style={styles.loadingText}>Fetching alerts...</Text>
+          <Text style={styles.loadingText}>{language === 'hi' ? 'अलर्ट लोड हो रहे हैं...' : 'Fetching alerts...'}</Text>
         </View>
       ) : alerts.length === 0 ? (
         <View style={styles.emptyState}>
           <Image source={illustrations.emptyAlerts} style={styles.emptyImage} resizeMode="contain" />
-          <Text style={styles.emptyTitle}>No active alerts</Text>
-          <Text style={styles.emptyDesc}>Your farms are looking great. We'll notify you if anything needs attention.</Text>
+          <Text style={styles.emptyTitle}>{language === 'hi' ? 'कोई सक्रिय अलर्ट नहीं' : 'No active alerts'}</Text>
+          <Text style={styles.emptyDesc}>
+            {language === 'hi' 
+              ? 'आपके खेत बहुत अच्छे लग रहे हैं। यदि किसी भी चीज पर ध्यान देने की आवश्यकता होगी तो हम आपको सूचित करेंगे।' 
+              : "Your farms are looking great. We'll notify you if anything needs attention."}
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -205,15 +239,15 @@ export const AlertsFeedScreen = ({ navigation }) => {
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('MyFarms')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('MyFarms')}>
           <Feather name="home" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.home}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('Farms')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('Farms')}>
           <Feather name="layers" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.farms}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('InterventionDetail')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('InterventionDetail')}>
           <Feather name="bar-chart-2" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.insights}</Text>
         </TouchableOpacity>
@@ -221,7 +255,7 @@ export const AlertsFeedScreen = ({ navigation }) => {
           <Feather name="bell" size={20} color={materialTheme.colors.primary} />
           <Text style={[styles.bottomNavText, styles.bottomNavTextActive]}>{t.alerts}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('Settings')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('Settings')}>
           <Feather name="user" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.profile}</Text>
         </TouchableOpacity>
@@ -355,6 +389,7 @@ const styles = StyleSheet.create({
     paddingBottom: materialTheme.spacing.md,
     borderTopWidth: 1,
     borderTopColor: materialTheme.colors.outline,
+    zIndex: 100,
   },
   bottomNavItem: {
     alignItems: 'center',

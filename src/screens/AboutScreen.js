@@ -2,25 +2,44 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
 import { materialTheme } from '../theme';
+import { useDemoState } from '../config/demoState';
+import { translations } from '../constants/translations';
+
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
 
 export const AboutScreen = ({ navigation }) => {
+  const { language } = useDemoState();
+  const t = translations[language] || translations.en;
+
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity 
+          onPress={() => {
+            triggerHapticSelection();
+            navigation.goBack();
+          }} 
+          style={styles.backBtn}
+        >
           <Feather name="arrow-left" size={22} color={materialTheme.colors.onSurface} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>About CropSentinel</Text>
+        <Text style={styles.headerTitle}>{t.aboutHeader}</Text>
         <View style={styles.headerSpacer} />
       </View>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.aboutCard}>
           <MaterialCommunityIcons name="sprout" size={48} color={materialTheme.colors.primary} />
           <Text style={styles.appName}>CropSentinel</Text>
-          <Text style={styles.version}>Version: v1.0.0</Text>
-          <Text style={styles.hackathon}>Hackathon: FAR AWAY 2026</Text>
-          <Text style={styles.description}>AI-Powered Farm Intelligence for healthier fields and better yields.</Text>
+          <Text style={styles.version}>{t.versionText}: v1.0.0</Text>
+          <Text style={styles.hackathon}>{t.hackathonText}: FAR AWAY 2026</Text>
+          <Text style={styles.description}>{t.appDescription}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, RefreshControl, Animated } from 'react-native';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
 
 import { materialTheme } from '../theme';
 import { crops } from '../assets';
@@ -12,6 +13,12 @@ import { ErrorState } from '../components/ErrorState';
 import { useDemoState } from '../config/demoState';
 import { DemoBanner } from '../components/DemoBanner';
 import { translations } from '../constants/translations';
+
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
 
 const FadeInCard = ({ children, delay = 0 }) => {
   const animatedValue = React.useRef(new Animated.Value(0)).current;
@@ -40,86 +47,29 @@ const FadeInCard = ({ children, delay = 0 }) => {
   return <Animated.View style={animatedStyle}>{children}</Animated.View>;
 };
 
-const WEATHER = [
-  { icon: 'sun', value: '31°C', label: 'Temp' },
-  { icon: 'droplet', value: '56%', label: 'Humidity' },
-  { icon: 'cloud-rain', value: '10%', label: 'Rain Chance' },
-  { icon: 'wind', value: '18 km/h', label: 'Wind' },
-];
-
-const getHealthBadgeStyle = (score, t) => {
-  if (score >= 75) {
-    return {
-      label: t.healthy || 'Healthy',
-      backgroundColor: '#DCFCE7',
-      color: materialTheme.colors.success,
-    };
-  }
-  if (score >= 50) {
-    return {
-      label: t.warning || 'Warning',
-      backgroundColor: '#FEF3C7',
-      color: materialTheme.colors.warning,
-    };
-  }
-  return {
-    label: t.critical || 'Critical',
-    backgroundColor: '#FEE2E2',
-    color: materialTheme.colors.error,
-  };
-};
-
 const getHealthColor = (score) => {
   if (score >= 75) return materialTheme.colors.success;
   if (score >= 50) return materialTheme.colors.warning;
   return materialTheme.colors.error;
 };
 
-const localTranslations = {
-  en: {
-    criticalAlertsCount: 'Critical Alerts',
-    highestRiskField: 'Highest-Risk Field Highlight',
-    latestRecommendation: 'Latest AI Recommendation',
-    apply: 'Apply Recommendation',
-    viewInsights: 'View Insights',
-    viewDetails: 'View Details',
-    allStable: 'All systems stable — 0 Critical Alerts',
-    criticalNotice: 'Critical alert(s) require attention',
-    estimatedCost: 'Est. Cost',
-    yieldAtRisk: 'Yield at Risk',
-    confidence: 'Confidence',
-    noFarms: 'No fields registered yet.',
-    manageFarms: 'Manage Farms',
-  },
-  hi: {
-    criticalAlertsCount: 'गंभीर चेतावनी',
-    highestRiskField: 'उच्चतम जोखिम वाला क्षेत्र',
-    latestRecommendation: 'नवीनतम एआई सलाह',
-    apply: 'सलाह लागू करें',
-    viewInsights: 'इनसाइट्स देखें',
-    viewDetails: 'विवरण देखें',
-    allStable: 'सभी प्रणालियाँ स्थिर हैं — 0 गंभीर चेतावनी',
-    criticalNotice: 'गंभीर चेतावनी (ओं) पर ध्यान देने की आवश्यकता है',
-    estimatedCost: 'अनुमानित लागत',
-    yieldAtRisk: 'जोखिम में उपज',
-    confidence: 'एआई विश्वास',
-    noFarms: 'अभी तक कोई खेत पंजीकृत नहीं है।',
-    manageFarms: 'खेतों का प्रबंधन करें',
-  }
-};
-
 export const MyFarmsScreen = ({ navigation }) => {
   const { isDemoMode, isDroughtSimulated, language } = useDemoState();
-  const tGlobal = translations[language] || translations.en;
-  const tLocal = localTranslations[language] || localTranslations.en;
+  const t = translations[language] || translations.en;
 
   const [farms, setFarms] = useState([]);
   const [criticalCount, setCriticalCount] = useState(0);
-  const [recommendation, setRecommendation] = useState(null);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+
+  const weatherItems = [
+    { icon: 'sun', value: '31°C', label: t.weatherTemp },
+    { icon: 'droplet', value: '56%', label: t.weatherHumidity },
+    { icon: 'cloud-rain', value: '10%', label: t.weatherRain },
+    { icon: 'wind', value: '18 km/h', label: t.weatherWind },
+  ];
 
   const loadDashboardData = async (isRef = false) => {
     if (isRef) {
@@ -295,6 +245,11 @@ export const MyFarmsScreen = ({ navigation }) => {
   // Use highest risk farm recommendation as the latest AI recommendation
   const latestRec = highestRiskFarm ? highestRiskFarm.recommendation : null;
 
+  const navigateToTab = (route) => {
+    triggerHapticSelection();
+    navigation.navigate(route);
+  };
+
   if (loading && !refreshing && farms.length === 0) {
     return <LoadingState message="Fetching dashboard metrics..." />;
   }
@@ -306,18 +261,18 @@ export const MyFarmsScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Settings')}>
+          <TouchableOpacity style={styles.menuBtn} onPress={() => navigateToTab('Settings')}>
             <Feather name="menu" size={22} color={materialTheme.colors.onSurface} />
           </TouchableOpacity>
           <View style={styles.demoChip}>
-            <Text style={styles.demoChipText}>Demo Mode: {isDemoMode ? 'ON' : 'OFF'}</Text>
+            <Text style={styles.demoChipText}>{t.demoMode}: {isDemoMode ? 'ON' : 'OFF'}</Text>
           </View>
-          <TouchableOpacity style={styles.bellBtn} onPress={() => navigation.navigate('AlertsFeed')}>
+          <TouchableOpacity style={styles.bellBtn} onPress={() => navigateToTab('AlertsFeed')}>
             <Feather name="bell" size={20} color={materialTheme.colors.onSurface} />
           </TouchableOpacity>
         </View>
-        <Text style={styles.greeting}>Good Morning, Farmer 🌿</Text>
-        <Text style={styles.subtitle}>Here's what's happening on your farms</Text>
+        <Text style={styles.greeting}>{t.greeting}</Text>
+        <Text style={styles.subtitle}>{t.subtitleHome}</Text>
       </View>
 
       <ScrollView
@@ -333,7 +288,7 @@ export const MyFarmsScreen = ({ navigation }) => {
       >
         {/* Weather Row */}
         <View style={styles.weatherRow}>
-          {WEATHER.map((item) => (
+          {weatherItems.map((item) => (
             <View key={item.label} style={styles.weatherCard}>
               <Feather name={item.icon} size={18} color={materialTheme.colors.primary} />
               <Text style={styles.weatherValue}>{item.value}</Text>
@@ -354,7 +309,7 @@ export const MyFarmsScreen = ({ navigation }) => {
             styles.alertsBanner,
             criticalCount > 0 ? styles.alertsBannerCritical : styles.alertsBannerStable
           ]}
-          onPress={() => navigation.navigate('AlertsFeed')}
+          onPress={() => navigateToTab('AlertsFeed')}
           activeOpacity={0.85}
         >
           <View style={styles.alertsBannerLeft}>
@@ -369,8 +324,8 @@ export const MyFarmsScreen = ({ navigation }) => {
               criticalCount > 0 ? styles.alertsBannerTextCritical : styles.alertsBannerTextStable
             ]}>
               {criticalCount > 0
-                ? `${criticalCount} ${tLocal.criticalNotice}`
-                : tLocal.allStable
+                ? `${criticalCount} ${t.criticalNotice}`
+                : t.allStable
               }
             </Text>
           </View>
@@ -384,13 +339,16 @@ export const MyFarmsScreen = ({ navigation }) => {
         {/* Highest-Risk Farm Highlight Card */}
         {highestRiskFarm ? (
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>{tLocal.highestRiskField}</Text>
+            <Text style={styles.sectionTitle}>{t.highestRiskField}</Text>
             <TouchableOpacity
               style={[
                 styles.highlightCard,
                 { borderColor: getHealthColor(highestRiskFarm.healthScore) }
               ]}
-              onPress={() => navigation.navigate('FarmDetail', { farm: highestRiskFarm })}
+              onPress={() => {
+                triggerHapticSelection();
+                navigation.navigate('FarmDetail', { farm: highestRiskFarm });
+              }}
               activeOpacity={0.9}
             >
               <View style={styles.highlightHeader}>
@@ -434,23 +392,26 @@ export const MyFarmsScreen = ({ navigation }) => {
 
               <TouchableOpacity
                 style={[styles.highlightBtn, { backgroundColor: getHealthColor(highestRiskFarm.healthScore) }]}
-                onPress={() => navigation.navigate('FarmDetail', { farm: highestRiskFarm })}
+                onPress={() => {
+                  triggerHapticSelection();
+                  navigation.navigate('FarmDetail', { farm: highestRiskFarm });
+                }}
               >
-                <Text style={styles.highlightBtnText}>{tLocal.viewDetails}</Text>
+                <Text style={styles.highlightBtnText}>{t.viewDetails}</Text>
                 <Feather name="arrow-right" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />
               </TouchableOpacity>
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>{tLocal.noFarms}</Text>
+            <Text style={styles.emptyText}>{t.noFarms}</Text>
           </View>
         )}
 
         {/* Latest AI Recommendation Card */}
         {latestRec && (
           <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>{tLocal.latestRecommendation}</Text>
+            <Text style={styles.sectionTitle}>{t.latestRecommendation}</Text>
             <View style={styles.recommendationCard}>
               <View style={styles.recommendationHeader}>
                 <View style={styles.recIconContainer}>
@@ -463,30 +424,30 @@ export const MyFarmsScreen = ({ navigation }) => {
 
               <View style={styles.recMetricsRow}>
                 <View style={styles.recMetric}>
-                  <Text style={styles.recMetricLabel}>{tLocal.estimatedCost}</Text>
+                  <Text style={styles.recMetricLabel}>{t.estimatedCost}</Text>
                   <Text style={styles.recMetricValue}>
                     {latestRec.estimated_cost > 0 ? `₹${latestRec.estimated_cost}` : 'Free'}
                   </Text>
                 </View>
                 <View style={styles.recMetricDivider} />
                 <View style={styles.recMetric}>
-                  <Text style={styles.recMetricLabel}>{tLocal.yieldAtRisk}</Text>
+                  <Text style={styles.recMetricLabel}>{t.yieldAtRisk}</Text>
                   <Text style={styles.recMetricValue}>
                     {latestRec.yield_loss_risk > 0 ? `₹${latestRec.yield_loss_risk}` : 'None'}
                   </Text>
                 </View>
                 <View style={styles.recMetricDivider} />
                 <View style={styles.recMetric}>
-                  <Text style={styles.recMetricLabel}>{tLocal.confidence}</Text>
+                  <Text style={styles.recMetricLabel}>{t.confidence}</Text>
                   <Text style={styles.recMetricValue}>{latestRec.confidence}%</Text>
                 </View>
               </View>
 
               <TouchableOpacity
                 style={styles.recBtn}
-                onPress={() => navigation.navigate('InterventionDetail')}
+                onPress={() => navigateToTab('InterventionDetail')}
               >
-                <Text style={styles.recBtnText}>{tLocal.viewInsights}</Text>
+                <Text style={styles.recBtnText}>{t.viewInsights}</Text>
                 <Feather name="bar-chart-2" size={16} color="#FFFFFF" style={{ marginLeft: 6 }} />
               </TouchableOpacity>
             </View>
@@ -514,23 +475,23 @@ export const MyFarmsScreen = ({ navigation }) => {
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.bottomNavItemActive}>
           <Feather name="home" size={20} color={materialTheme.colors.primary} />
-          <Text style={[styles.bottomNavText, styles.bottomNavTextActive]}>{tGlobal.home}</Text>
+          <Text style={[styles.bottomNavText, styles.bottomNavTextActive]}>{t.home}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('Farms')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigateToTab('Farms')}>
           <Feather name="layers" size={20} color={materialTheme.colors.textSecondary} />
-          <Text style={styles.bottomNavText}>{tGlobal.farms}</Text>
+          <Text style={styles.bottomNavText}>{t.farms}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('InterventionDetail')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigateToTab('InterventionDetail')}>
           <Feather name="bar-chart-2" size={20} color={materialTheme.colors.textSecondary} />
-          <Text style={styles.bottomNavText}>{tGlobal.insights}</Text>
+          <Text style={styles.bottomNavText}>{t.insights}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('AlertsFeed')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigateToTab('AlertsFeed')}>
           <Feather name="bell" size={20} color={materialTheme.colors.textSecondary} />
-          <Text style={styles.bottomNavText}>{tGlobal.alerts}</Text>
+          <Text style={styles.bottomNavText}>{t.alerts}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('Settings')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigateToTab('Settings')}>
           <Feather name="user" size={20} color={materialTheme.colors.textSecondary} />
-          <Text style={styles.bottomNavText}>{tGlobal.profile}</Text>
+          <Text style={styles.bottomNavText}>{t.profile}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

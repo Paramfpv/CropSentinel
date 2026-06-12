@@ -119,8 +119,9 @@ To resolve the duplicate content between the "Home" and "Farms" tabs, a complete
 ### 3. Navigation Upgrades
 * Bottom navigation bars across `MyFarmsScreen`, `FarmsScreen`, `AlertsFeedScreen`, `InterventionDetailScreen`, `SettingsScreen`, and `FarmDetailScreen` have been fully linked to coordinate with the new screen hierarchy.
 * All routes pass bundling validation via `npx expo export` and health checks via `npx expo-doctor`.
- |
 
-
-
-
+### 4. Global Language Localization, M3 Dialogs & Haptics (D5 Final Polish Pass)
+* **Global Language Localization**: Audit and implementation completed across all 12 app screens. Switches dynamically and immediately between English and Hindi based on user settings without needing app restarts.
+* **Premium Material 3 Dialogs**: Popups in `AddFieldScreen` (save farm success) and `InterventionDetailScreen` (recorded recommendations success dialog with cost/risk ROI metrics) styled to Material 3 standard (rounded 28dp corners, clean entry scale/fade timing animations).
+* **Haptic Feedback**: Subtle physical responses added to selectors, settings toggle switches, buttons, and simulation actions, safely wrapped in `try/catch` to ensure complete compatibility on devices/emulators that do not support haptics.
+* **Build Integrity**: Checked using `npx expo-doctor` (21/21 passed) and validated using `npx expo export` (both iOS and Android bundles successfully compiled and generated under `dist/` without any warnings).

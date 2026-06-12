@@ -2,50 +2,70 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
 import { materialTheme } from '../theme';
+import { useDemoState } from '../config/demoState';
+import { translations } from '../constants/translations';
+
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
 
 export const HelpSupportScreen = ({ navigation }) => {
+  const { language } = useDemoState();
+  const t = translations[language] || translations.en;
+
   const handleContactSupport = (method) => {
+    triggerHapticSelection();
     Alert.alert(
-      "Contact Support",
-      `Connecting to support via ${method}...`,
-      [{ text: "OK" }]
+      t.contactSupportTitle,
+      `${t.contactSupportMsg}${method}...`,
+      [{ text: t.ok }]
     );
   };
 
   const faqs = [
     {
-      q: "How often does NDVI data update?",
-      a: "Satellite NDVI trends are refreshed every 5 days depending on Sentinel-2 satellite passes and cloud cover."
+      q: t.faq1Q,
+      a: t.faq1A
     },
     {
-      q: "What does the crop health score mean?",
-      a: "It combines NDVI, soil moisture, and localized weather anomalies to rate crop wellness out of 100."
+      q: t.faq2Q,
+      a: t.faq2A
     },
     {
-      q: "How do I add a new farm boundary?",
-      a: "Go to Home, press the '+' Floating Button on the bottom right, and enter the details. In a future update, you'll draw on the map directly!"
+      q: t.faq3Q,
+      a: t.faq3A
     }
   ];
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity 
+          onPress={() => {
+            triggerHapticSelection();
+            navigation.goBack();
+          }} 
+          style={styles.backBtn}
+        >
           <Feather name="arrow-left" size={22} color={materialTheme.colors.onSurface} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Help & Support</Text>
+        <Text style={styles.headerTitle}>{t.helpSupportHeader}</Text>
         <View style={styles.headerSpacer} />
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionTitle}>Contact Channels</Text>
+        <Text style={styles.sectionTitle}>{t.contactChannels}</Text>
         <View style={styles.card}>
           <TouchableOpacity style={styles.channelItem} onPress={() => handleContactSupport("Email")}>
             <View style={styles.channelIcon}>
               <Feather name="mail" size={20} color={materialTheme.colors.primary} />
             </View>
             <View style={styles.channelDetails}>
-              <Text style={styles.channelTitle}>Email Support</Text>
+              <Text style={styles.channelTitle}>{t.emailSupport}</Text>
               <Text style={styles.channelSub}>support@cropsentinel.com</Text>
             </View>
             <Feather name="chevron-right" size={18} color={materialTheme.colors.textSecondary} />
@@ -56,14 +76,14 @@ export const HelpSupportScreen = ({ navigation }) => {
               <Feather name="phone" size={20} color={materialTheme.colors.primary} />
             </View>
             <View style={styles.channelDetails}>
-              <Text style={styles.channelTitle}>Toll-Free Helpline</Text>
+              <Text style={styles.channelTitle}>{t.tollFreeHelp}</Text>
               <Text style={styles.channelSub}>1800-456-7890</Text>
             </View>
             <Feather name="chevron-right" size={18} color={materialTheme.colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+        <Text style={styles.sectionTitle}>{t.faqsTitle}</Text>
         {faqs.map((faq, index) => (
           <View key={index} style={styles.faqCard}>
             <Text style={styles.faqQuestion}>{faq.q}</Text>

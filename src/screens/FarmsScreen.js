@@ -1,17 +1,29 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, RefreshControl, Animated, Alert, TextInput } from 'react-native';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
 
 import { materialTheme } from '../theme';
 import { crops } from '../assets';
 import { fetchDashboard } from '../services';
 import { LoadingState } from '../components/LoadingState';
-import { ErrorState } from '../components/ErrorState';
 import { useDemoState } from '../config/demoState';
 import { DemoBanner } from '../components/DemoBanner';
 import { translations } from '../constants/translations';
+
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
+
+const triggerHapticWarning = async () => {
+  try {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  } catch (e) {}
+};
 
 const FadeInCard = ({ children, delay = 0 }) => {
   const animatedValue = React.useRef(new Animated.Value(0)).current;
@@ -43,20 +55,20 @@ const FadeInCard = ({ children, delay = 0 }) => {
 const getHealthBadgeStyle = (score, t) => {
   if (score >= 75) {
     return {
-      label: t.healthy || 'Healthy',
+      label: t.healthy,
       backgroundColor: '#DCFCE7',
       color: materialTheme.colors.success,
     };
   }
   if (score >= 50) {
     return {
-      label: t.warning || 'Warning',
+      label: t.warning,
       backgroundColor: '#FEF3C7',
       color: materialTheme.colors.warning,
     };
   }
   return {
-    label: t.critical || 'Critical',
+    label: t.critical,
     backgroundColor: '#FEE2E2',
     color: materialTheme.colors.error,
   };
@@ -68,43 +80,9 @@ const getHealthColor = (score) => {
   return materialTheme.colors.error;
 };
 
-const localTranslations = {
-  en: {
-    subtitle: 'Manage and monitor all your fields.',
-    searchPlaceholder: 'Search farms...',
-    all: 'All',
-    healthy: 'Healthy',
-    warning: 'Warning',
-    critical: 'Critical',
-    noFarms: 'No farms found matching your criteria.',
-    addFarm: 'Add Farm',
-    deleteFarm: 'Delete Farm',
-    deleteConfirm: 'Are you sure you want to delete this farm? This action cannot be undone.',
-    viewDetails: 'View Details',
-    editFarm: 'Edit Farm',
-    cancel: 'Cancel',
-  },
-  hi: {
-    subtitle: 'अपने सभी खेतों का प्रबंधन और निगरानी करें।',
-    searchPlaceholder: 'खेतों को खोजें...',
-    all: 'सभी',
-    healthy: 'स्वस्थ',
-    warning: 'चेतावनी',
-    critical: 'गंभीर',
-    noFarms: 'आपके मानदंडों से मेल खाने वाला कोई खेत नहीं मिला।',
-    addFarm: 'खेत जोड़ें',
-    deleteFarm: 'खेत हटाएं',
-    deleteConfirm: 'क्या आप वाकई इस खेत को हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।',
-    viewDetails: 'विवरण देखें',
-    editFarm: 'संपादित करें',
-    cancel: 'रद्द करें',
-  }
-};
-
 export const FarmsScreen = ({ navigation }) => {
   const { isDemoMode, isDroughtSimulated, language } = useDemoState();
-  const tGlobal = translations[language] || translations.en;
-  const tLocal = localTranslations[language] || localTranslations.en;
+  const t = translations[language] || translations.en;
 
   const [farms, setFarms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -237,34 +215,38 @@ export const FarmsScreen = ({ navigation }) => {
   );
 
   const handleFarmMenuPress = (farm) => {
+    triggerHapticSelection();
     Alert.alert(
       `${farm.name}`,
-      tLocal.cancel,
+      t.cancel,
       [
-        { text: tLocal.viewDetails, onPress: () => navigation.navigate('FarmDetail', { farm }) },
-        { text: tLocal.editFarm, onPress: () => navigation.navigate('AddField', { farm }) },
+        { text: t.viewDetails, onPress: () => { triggerHapticSelection(); navigation.navigate('FarmDetail', { farm }); } },
+        { text: t.editFarm, onPress: () => { triggerHapticSelection(); navigation.navigate('AddField', { farm }); } },
         {
-          text: tLocal.deleteFarm,
+          text: t.deleteFarm,
           style: "destructive",
-          onPress: () => handleDeleteFarm(farm),
+          onPress: () => {
+            triggerHapticWarning();
+            handleDeleteFarm(farm);
+          },
         },
-        { text: tLocal.cancel, style: "cancel" }
+        { text: t.cancel, style: "cancel" }
       ]
     );
   };
 
   const handleDeleteFarm = (farm) => {
     Alert.alert(
-      tLocal.deleteFarm,
-      tLocal.deleteConfirm,
+      t.deleteFarm,
+      t.deleteConfirm,
       [
-        { text: tLocal.cancel, style: "cancel" },
+        { text: t.cancel, style: "cancel" },
         {
-          text: tLocal.deleteFarm,
+          text: t.deleteFarm,
           style: "destructive",
           onPress: () => {
             setFarms(prev => prev.filter(f => f.id !== farm.id));
-            Alert.alert("Deleted", "Farm removed from list.");
+            Alert.alert(t.success, "Farm removed from list.");
           }
         }
       ]
@@ -286,6 +268,11 @@ export const FarmsScreen = ({ navigation }) => {
     return matchesSearch && matchesStatus;
   });
 
+  const handleTabPress = (route) => {
+    triggerHapticSelection();
+    navigation.navigate(route);
+  };
+
   const renderFilterChip = (filterName, displayName) => {
     const isActive = activeFilter === filterName;
     return (
@@ -295,7 +282,10 @@ export const FarmsScreen = ({ navigation }) => {
           styles.chip,
           isActive ? styles.chipActive : styles.chipInactive
         ]}
-        onPress={() => setActiveFilter(filterName)}
+        onPress={() => {
+          triggerHapticSelection();
+          setActiveFilter(filterName);
+        }}
       >
         <Text style={[
           styles.chipText,
@@ -317,8 +307,8 @@ export const FarmsScreen = ({ navigation }) => {
       
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>{tGlobal.myFarms}</Text>
-        <Text style={styles.subtitle}>{tLocal.subtitle}</Text>
+        <Text style={styles.title}>{t.myFarms}</Text>
+        <Text style={styles.subtitle}>{t.subtitleFarms}</Text>
       </View>
 
       {/* Search Bar */}
@@ -327,14 +317,16 @@ export const FarmsScreen = ({ navigation }) => {
           <Feather name="search" size={20} color={materialTheme.colors.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder={tLocal.searchPlaceholder}
+            placeholder={t.searchPlaceholder}
             placeholderTextColor={materialTheme.colors.textSecondary}
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={(text) => {
+              setSearchQuery(text);
+            }}
             autoCorrect={false}
           />
           {searchQuery !== '' && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <TouchableOpacity onPress={() => { triggerHapticSelection(); setSearchQuery(''); }}>
               <Feather name="x" size={18} color={materialTheme.colors.textSecondary} style={{ padding: 4 }} />
             </TouchableOpacity>
           )}
@@ -344,10 +336,10 @@ export const FarmsScreen = ({ navigation }) => {
       {/* Filter Chips */}
       <View style={styles.filtersContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersScroll}>
-          {renderFilterChip('All', tLocal.all)}
-          {renderFilterChip('Healthy', tLocal.healthy)}
-          {renderFilterChip('Warning', tLocal.warning)}
-          {renderFilterChip('Critical', tLocal.critical)}
+          {renderFilterChip('All', t.all)}
+          {renderFilterChip('Healthy', t.healthy)}
+          {renderFilterChip('Warning', t.warning)}
+          {renderFilterChip('Critical', t.critical)}
         </ScrollView>
       </View>
 
@@ -372,17 +364,20 @@ export const FarmsScreen = ({ navigation }) => {
         {filteredFarms.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Feather name="info" size={40} color={materialTheme.colors.textSecondary} style={{ marginBottom: 12 }} />
-            <Text style={styles.emptyText}>{tLocal.noFarms}</Text>
+            <Text style={styles.emptyText}>{t.noFarmsFarms}</Text>
           </View>
         ) : (
           <View style={styles.farmsContainer}>
             {filteredFarms.map((item, index) => {
-              const healthBadge = getHealthBadgeStyle(item.healthScore, tLocal);
+              const healthBadge = getHealthBadgeStyle(item.healthScore, t);
               return (
                 <FadeInCard key={item.id} delay={index * 100}>
                   <TouchableOpacity
                     style={styles.farmCard}
-                    onPress={() => navigation.navigate('FarmDetail', { farm: item })}
+                    onPress={() => {
+                      triggerHapticSelection();
+                      navigation.navigate('FarmDetail', { farm: item });
+                    }}
                   >
                     <View style={styles.farmCardLeft}>
                       <Image
@@ -436,32 +431,39 @@ export const FarmsScreen = ({ navigation }) => {
       </ScrollView>
 
       {/* Floating Action Button (FAB) */}
-      <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('AddField')} activeOpacity={0.85}>
+      <TouchableOpacity 
+        style={styles.fab} 
+        onPress={() => {
+          triggerHapticSelection();
+          navigation.navigate('AddField');
+        }} 
+        activeOpacity={0.85}
+      >
         <Feather name="plus" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
-        <Text style={styles.fabText}>{tLocal.addFarm}</Text>
+        <Text style={styles.fabText}>{t.addFarm}</Text>
       </TouchableOpacity>
 
       {/* Bottom Nav Bar */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('MyFarms')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('MyFarms')}>
           <Feather name="home" size={20} color={materialTheme.colors.textSecondary} />
-          <Text style={styles.bottomNavText}>{tGlobal.home}</Text>
+          <Text style={styles.bottomNavText}>{t.home}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.bottomNavItemActive}>
           <Feather name="layers" size={20} color={materialTheme.colors.primary} />
-          <Text style={[styles.bottomNavText, styles.bottomNavTextActive]}>{tGlobal.farms}</Text>
+          <Text style={[styles.bottomNavText, styles.bottomNavTextActive]}>{t.farms}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('InterventionDetail')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('InterventionDetail')}>
           <Feather name="bar-chart-2" size={20} color={materialTheme.colors.textSecondary} />
-          <Text style={styles.bottomNavText}>{tGlobal.insights}</Text>
+          <Text style={styles.bottomNavText}>{t.insights}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('AlertsFeed')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('AlertsFeed')}>
           <Feather name="bell" size={20} color={materialTheme.colors.textSecondary} />
-          <Text style={styles.bottomNavText}>{tGlobal.alerts}</Text>
+          <Text style={styles.bottomNavText}>{t.alerts}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('Settings')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('Settings')}>
           <Feather name="user" size={20} color={materialTheme.colors.textSecondary} />
-          <Text style={styles.bottomNavText}>{tGlobal.profile}</Text>
+          <Text style={styles.bottomNavText}>{t.profile}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

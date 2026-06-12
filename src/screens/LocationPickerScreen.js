@@ -2,9 +2,28 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
 import { materialTheme } from '../theme';
+import { useDemoState } from '../config/demoState';
+import { translations } from '../constants/translations';
+
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
+
+const triggerHapticWarning = async () => {
+  try {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  } catch (e) {}
+};
 
 export const LocationPickerScreen = ({ navigation }) => {
+  const { language } = useDemoState();
+  const t = translations[language] || translations.en;
+
   const [latText, setLatText] = useState('');
   const [lonText, setLonText] = useState('');
   const [errorMsg, setErrorMsg] = useState(null);
@@ -15,15 +34,18 @@ export const LocationPickerScreen = ({ navigation }) => {
     const parsedLon = parseFloat(lonText);
 
     if (isNaN(parsedLat) || parsedLat < -90 || parsedLat > 90) {
-      setErrorMsg('Latitude must be a valid number between -90 and 90.');
+      triggerHapticWarning();
+      setErrorMsg(t.latError);
       return;
     }
 
     if (isNaN(parsedLon) || parsedLon < -180 || parsedLon > 180) {
-      setErrorMsg('Longitude must be a valid number between -180 and 180.');
+      triggerHapticWarning();
+      setErrorMsg(t.lonError);
       return;
     }
 
+    triggerHapticSelection();
     // Return to AddField screen passing coordinates
     navigation.navigate('AddField', {
       selectedLocation: {
@@ -42,10 +64,16 @@ export const LocationPickerScreen = ({ navigation }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity 
+            onPress={() => {
+              triggerHapticSelection();
+              navigation.goBack();
+            }} 
+            style={styles.backBtn}
+          >
             <Feather name="arrow-left" size={22} color={materialTheme.colors.onSurface} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Farm Coordinates</Text>
+          <Text style={styles.headerTitle}>{t.farmCoordinatesTitle}</Text>
           <View style={styles.headerSpacer} />
         </View>
 
@@ -56,43 +84,41 @@ export const LocationPickerScreen = ({ navigation }) => {
         >
           <View style={styles.infoCard}>
             <Feather name="info" size={20} color={materialTheme.colors.primary} style={styles.infoIcon} />
-            <Text style={styles.helperText}>
-              Enter your farm's GPS coordinates manually. You can copy these from Google Maps or another mapping source.
-            </Text>
+            <Text style={styles.helperText}>{t.locationHelperText}</Text>
           </View>
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Latitude</Text>
+            <Text style={styles.fieldLabel}>{t.latLabel}</Text>
             <TextInput
               style={styles.fieldInput}
               placeholder="e.g., 22.5937"
               placeholderTextColor={materialTheme.colors.textSecondary}
               value={latText}
-              onChangeText={(t) => {
-                setLatText(t);
+              onChangeText={(txt) => {
+                setLatText(txt);
                 if (errorMsg) setErrorMsg(null);
               }}
               keyboardType="numeric"
               autoCorrect={false}
             />
-            <Text style={styles.fieldHint}>Must be between -90 and 90 degrees.</Text>
+            <Text style={styles.fieldHint}>{t.latHint}</Text>
           </View>
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Longitude</Text>
+            <Text style={styles.fieldLabel}>{t.lonLabel}</Text>
             <TextInput
               style={styles.fieldInput}
               placeholder="e.g., 78.9629"
               placeholderTextColor={materialTheme.colors.textSecondary}
               value={lonText}
-              onChangeText={(t) => {
-                setLonText(t);
+              onChangeText={(txt) => {
+                setLonText(txt);
                 if (errorMsg) setErrorMsg(null);
               }}
               keyboardType="numeric"
               autoCorrect={false}
             />
-            <Text style={styles.fieldHint}>Must be between -180 and 180 degrees.</Text>
+            <Text style={styles.fieldHint}>{t.lonHint}</Text>
           </View>
 
           {errorMsg && (
@@ -110,7 +136,7 @@ export const LocationPickerScreen = ({ navigation }) => {
             disabled={isButtonDisabled}
             activeOpacity={0.8}
           >
-            <Text style={styles.confirmBtnText}>Use Coordinates</Text>
+            <Text style={styles.confirmBtnText}>{t.useCoordinates}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

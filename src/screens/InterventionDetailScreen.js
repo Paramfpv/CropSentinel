@@ -1,33 +1,49 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Alert, ActivityIndicator, Share } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl, Alert, ActivityIndicator, Share, Animated } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+
 import { materialTheme } from '../theme';
 import { fetchDashboard, getIntervention } from '../services';
 import { LoadingState } from '../components/LoadingState';
 import { ErrorState } from '../components/ErrorState';
 import { scheduleLocalAlert } from '../services/notifications';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { useDemoState } from '../config/demoState';
 import { DemoBanner } from '../components/DemoBanner';
 import { translations } from '../constants/translations';
 
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
+
+const triggerHapticSuccess = async () => {
+  try {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  } catch (e) {}
+};
+
 export const InterventionDetailScreen = ({ navigation }) => {
   const { isDemoMode, isDroughtSimulated, applyIntervention, language } = useDemoState();
   const t = translations[language] || translations.en;
+
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
-  const confidenceProgress = useSharedValue(0);
-
   const [isApplying, setIsApplying] = useState(false);
-  const [showSheet, setShowSheet] = useState(false);
-  const overlayOpacity = useSharedValue(0);
-  const sheetTranslateY = useSharedValue(500);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  // Animated values
+  const confidenceProgress = useRef(new Animated.Value(0)).current;
+  const dialogFadeAnim = useRef(new Animated.Value(0)).current;
+  const dialogScaleAnim = useRef(new Animated.Value(0.9)).current;
 
   const handleMoreMenuPress = () => {
+    triggerHapticSelection();
     Alert.alert(
       "Insights Options",
       "Choose an option:",
@@ -62,36 +78,14 @@ export const InterventionDetailScreen = ({ navigation }) => {
     }
   };
 
-  const animatedProgressStyle = useAnimatedStyle(() => {
-    return {
-      width: `${confidenceProgress.value * 100}%`,
-    };
-  });
-
-  const overlayStyle = useAnimatedStyle(() => {
-    return {
-      opacity: overlayOpacity.value,
-    };
-  });
-
-  const sheetStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: sheetTranslateY.value }],
-    };
-  });
-
   const triggerApply = async () => {
+    triggerHapticSelection();
     setIsApplying(true);
     // Simulate loading for 800ms
     setTimeout(async () => {
       setIsApplying(false);
-      sheetTranslateY.value = 500;
-      setShowSheet(true);
-      
-      // Animate in
-      overlayOpacity.value = withTiming(0.4, { duration: 250 });
-      sheetTranslateY.value = withSpring(0, { damping: 24, stiffness: 150 });
-      
+      setShowSuccessDialog(true);
+
       if (isDemoMode) {
         applyIntervention(3); // Sugarcane farm
       }
@@ -101,20 +95,7 @@ export const InterventionDetailScreen = ({ navigation }) => {
         "CropSentinel Alert",
         "Intervention applied successfully. Continue monitoring your farm."
       );
-
-      // Auto-dismiss after 2.5 seconds
-      setTimeout(() => {
-        dismissSheet();
-      }, 2500);
     }, 800);
-  };
-
-  const dismissSheet = () => {
-    overlayOpacity.value = withTiming(0, { duration: 250 });
-    sheetTranslateY.value = withTiming(500, { duration: 250 });
-    setTimeout(() => {
-      setShowSheet(false);
-    }, 250);
   };
 
   const loadIntervention = async (isRefreshing = false) => {
@@ -173,10 +154,32 @@ export const InterventionDetailScreen = ({ navigation }) => {
 
   useEffect(() => {
     if (details) {
-      confidenceProgress.value = 0;
-      confidenceProgress.value = withTiming(details.confidence, { duration: 350 });
+      confidenceProgress.setValue(0);
+      Animated.timing(confidenceProgress, {
+        toValue: details.confidence,
+        duration: 350,
+        useNativeDriver: false, // width style requires layout thread
+      }).start();
     }
   }, [details]);
+
+  useEffect(() => {
+    if (showSuccessDialog) {
+      triggerHapticSuccess();
+      Animated.parallel([
+        Animated.timing(dialogFadeAnim, {
+          toValue: 1,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+        Animated.timing(dialogScaleAnim, {
+          toValue: 1,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [showSuccessDialog]);
 
   const onRefresh = useCallback(() => {
     loadIntervention(true);
@@ -216,7 +219,13 @@ export const InterventionDetailScreen = ({ navigation }) => {
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <DemoBanner />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity 
+          onPress={() => {
+            triggerHapticSelection();
+            navigation.goBack();
+          }} 
+          style={styles.backBtn}
+        >
           <Feather name="arrow-left" size={22} color={materialTheme.colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t.insights}</Text>
@@ -239,7 +248,7 @@ export const InterventionDetailScreen = ({ navigation }) => {
         >
           <View style={styles.recommendationBadge}>
             <Feather name="zap" size={14} color={materialTheme.colors.error} />
-            <Text style={styles.recommendationText}>AI Recommendation</Text>
+            <Text style={styles.recommendationText}>{t.aiRecommendation}</Text>
           </View>
 
           <Text style={styles.actionTitle}>{details.action}</Text>
@@ -247,43 +256,49 @@ export const InterventionDetailScreen = ({ navigation }) => {
 
           <View style={styles.metricsRow}>
             <View style={styles.metricCard}>
-              <Text style={styles.metricLabel}>Irrigation</Text>
+              <Text style={styles.metricLabel}>{t.irrigation}</Text>
               <Text style={styles.metricValue}>{details.irrigation}</Text>
             </View>
             <View style={styles.metricCard}>
-              <Text style={styles.metricLabel}>Cost</Text>
+              <Text style={styles.metricLabel}>{t.cost}</Text>
               <Text style={styles.metricValue}>{details.cost}</Text>
             </View>
             <View style={styles.metricCard}>
-              <Text style={styles.metricLabel}>Yield Risk</Text>
+              <Text style={styles.metricLabel}>{t.yieldRisk}</Text>
               <Text style={styles.metricValue}>{details.risk}</Text>
             </View>
           </View>
 
           <View style={styles.confidenceCard}>
-            <Text style={styles.confidenceLabel}>AI Confidence</Text>
+            <Text style={styles.confidenceLabel}>{t.aiConfidence}</Text>
             <View style={styles.confidenceBarBg}>
-              <Animated.View style={[styles.confidenceBarFill, animatedProgressStyle]} />
+              <Animated.View style={[
+                styles.confidenceBarFill, 
+                {
+                  width: confidenceProgress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%']
+                  })
+                }
+              ]} />
             </View>
             <Text style={styles.confidenceValue}>{confidencePercent}%</Text>
           </View>
 
           <View style={styles.infoCard}>
-            <Text style={styles.infoCardTitle}>Why this intervention?</Text>
-            <Text style={styles.infoCardText}>
-              Soil moisture is far below optimal range. Timely irrigation can prevent yield loss and improve crop health.
-            </Text>
+            <Text style={styles.infoCardTitle}>{t.whyIntervention}</Text>
+            <Text style={styles.infoCardText}>{t.whyInterventionDesc}</Text>
           </View>
 
           <View style={styles.infoCard}>
-            <Text style={styles.infoCardTitle}>Expected Outcome</Text>
+            <Text style={styles.infoCardTitle}>{t.expectedOutcome}</Text>
             <View style={styles.outcomeRow}>
               <View style={styles.outcomeBlock}>
-                <Text style={styles.outcomeLabel}>Yield Improvement</Text>
+                <Text style={styles.outcomeLabel}>{t.yieldImprovement}</Text>
                 <Text style={styles.outcomeValue}>{details.improvement}</Text>
               </View>
               <View style={styles.outcomeBlock}>
-                <Text style={styles.outcomeLabel}>ROI</Text>
+                <Text style={styles.outcomeLabel}>{t.roi}</Text>
                 <Text style={styles.outcomeValue}>{details.roi}</Text>
               </View>
             </View>
@@ -293,6 +308,7 @@ export const InterventionDetailScreen = ({ navigation }) => {
             style={[styles.primaryBtn, isApplying && styles.primaryBtnDisabled]}
             disabled={isApplying}
             onPress={triggerApply}
+            activeOpacity={0.85}
           >
             {isApplying ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
@@ -307,42 +323,68 @@ export const InterventionDetailScreen = ({ navigation }) => {
         </View>
       )}
 
-      {showSheet && (
-        <View style={StyleSheet.absoluteFill}>
-          <Animated.View style={[styles.sheetOverlay, overlayStyle]}>
-            <TouchableOpacity style={styles.flex1} activeOpacity={1} onPress={dismissSheet} />
-          </Animated.View>
-          <Animated.View style={[styles.bottomSheet, sheetStyle]}>
-            <View style={styles.sheetHandle} />
-            <View style={styles.sheetHeader}>
-              <View style={styles.successBadge}>
-                <Feather name="check" size={16} color="#FFFFFF" />
+      {showSuccessDialog && (
+        <View style={styles.modalOverlay}>
+          <Animated.View style={[
+            styles.modalContent,
+            {
+              opacity: dialogFadeAnim,
+              transform: [{ scale: dialogScaleAnim }]
+            }
+          ]}>
+            <View style={styles.successIconContainer}>
+              <Feather name="check" size={32} color="#FFFFFF" />
+            </View>
+            <Text style={styles.modalTitle}>{t.recordedTitle}</Text>
+            <Text style={styles.modalBody}>{t.recordedMsg}</Text>
+
+            <View style={styles.statsCard}>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>{t.costSavedLabel}</Text>
+                <Text style={styles.statValueText}>{details ? details.cost : '₹1,200'}</Text>
               </View>
-              <Text style={styles.sheetTitle}>{t.interventionApplied}</Text>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>{t.riskReductionLabel}</Text>
+                <Text style={styles.statValueText}>{details ? details.risk : '₹45,000'}</Text>
+              </View>
             </View>
-            <Text style={styles.sheetText}>
-              {t.recordedSuccessfully}
-            </Text>
-            <View style={styles.yieldProtectionCard}>
-              <Text style={styles.yieldProtectionLabel}>{t.potentialYieldProtected}</Text>
-              <Text style={styles.yieldProtectionValue}>
-                {details ? details.risk : '₹45,000'}
-              </Text>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={styles.modalPrimaryBtn} 
+                onPress={() => {
+                  triggerHapticSelection();
+                  setShowSuccessDialog(false);
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.modalPrimaryBtnText}>{t.continueMonitoring}</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.modalSecondaryBtn} 
+                onPress={() => {
+                  triggerHapticSelection();
+                  setShowSuccessDialog(false);
+                  navigation.navigate('AlertsFeed');
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalSecondaryBtnText}>{t.viewAlerts}</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.sheetBtn} onPress={dismissSheet}>
-              <Text style={styles.sheetBtnText}>{t.done}</Text>
-            </TouchableOpacity>
           </Animated.View>
         </View>
       )}
 
       {/* Bottom Nav Bar */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('MyFarms')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => { triggerHapticSelection(); navigation.navigate('MyFarms'); }}>
           <Feather name="home" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.home}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('Farms')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => { triggerHapticSelection(); navigation.navigate('Farms'); }}>
           <Feather name="layers" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.farms}</Text>
         </TouchableOpacity>
@@ -350,11 +392,11 @@ export const InterventionDetailScreen = ({ navigation }) => {
           <Feather name="bar-chart-2" size={20} color={materialTheme.colors.primary} />
           <Text style={[styles.bottomNavText, styles.bottomNavTextActive]}>{t.insights}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('AlertsFeed')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => { triggerHapticSelection(); navigation.navigate('AlertsFeed'); }}>
           <Feather name="bell" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.alerts}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('Settings')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => { triggerHapticSelection(); navigation.navigate('Settings'); }}>
           <Feather name="user" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.profile}</Text>
         </TouchableOpacity>
@@ -433,7 +475,7 @@ const styles = StyleSheet.create({
     color: materialTheme.colors.error,
   },
   actionTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '700',
     color: materialTheme.colors.onSurface,
     marginBottom: 4,
@@ -463,7 +505,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   metricValue: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: materialTheme.colors.onSurface,
   },
@@ -539,11 +581,16 @@ const styles = StyleSheet.create({
     borderRadius: materialTheme.borderRadius.button,
     paddingVertical: 16,
     alignItems: 'center',
+    marginTop: materialTheme.spacing.md,
   },
   primaryBtnText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  primaryBtnDisabled: {
+    backgroundColor: '#A3A3A3',
+    opacity: 0.8,
   },
   bottomNav: {
     position: 'absolute',
@@ -557,6 +604,7 @@ const styles = StyleSheet.create({
     paddingBottom: materialTheme.spacing.md,
     borderTopWidth: 1,
     borderTopColor: materialTheme.colors.outline,
+    zIndex: 100,
   },
   bottomNavItem: {
     alignItems: 'center',
@@ -577,99 +625,108 @@ const styles = StyleSheet.create({
     color: materialTheme.colors.primary,
     fontWeight: '700',
   },
-  primaryBtnDisabled: {
-    backgroundColor: '#A3A3A3',
-    opacity: 0.8,
-  },
-  sheetOverlay: {
+  modalOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#000000',
-    zIndex: 998,
-  },
-  flex1: {
-    flex: 1,
-  },
-  bottomSheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40,
-    alignItems: 'center',
-    zIndex: 999,
-    shadowColor: '#000000',
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 10,
-  },
-  sheetHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#E5E5E0',
-    borderRadius: 2,
-    marginBottom: 16,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
-  },
-  successBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#22C55E',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 1000,
   },
-  sheetTitle: {
+  modalContent: {
+    width: 320,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28, // Material 3 Spec for Dialogs
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+  },
+  successIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: materialTheme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 18,
+  },
+  modalTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1A1A1A',
-  },
-  sheetText: {
-    fontSize: 14,
-    color: '#7A7A7A',
+    marginBottom: 10,
     textAlign: 'center',
-    marginBottom: 20,
+  },
+  modalBody: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+    marginBottom: 18,
     lineHeight: 20,
   },
-  yieldProtectionCard: {
+  statsCard: {
     width: '100%',
-    backgroundColor: '#F5F5F0',
+    flexDirection: 'row',
+    backgroundColor: materialTheme.colors.surfaceVariant,
     borderWidth: 1,
-    borderColor: '#E5E5E0',
+    borderColor: materialTheme.colors.outline,
     borderRadius: 12,
-    padding: 16,
+    padding: 14,
     alignItems: 'center',
     marginBottom: 24,
   },
-  yieldProtectionLabel: {
-    fontSize: 12,
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 10,
     color: '#7A7A7A',
     fontWeight: '600',
     marginBottom: 4,
   },
-  yieldProtectionValue: {
-    fontSize: 24,
+  statValueText: {
+    fontSize: 16,
     fontWeight: '700',
-    color: '#22C55E',
+    color: materialTheme.colors.primaryDark,
   },
-  sheetBtn: {
+  statDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: materialTheme.colors.outline,
+  },
+  modalActions: {
     width: '100%',
-    backgroundColor: '#267D32',
+    gap: 8,
+  },
+  modalPrimaryBtn: {
+    width: '100%',
+    backgroundColor: materialTheme.colors.primary,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  sheetBtnText: {
+  modalPrimaryBtnText: {
     color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  modalSecondaryBtn: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: materialTheme.colors.outline,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalSecondaryBtnText: {
+    color: materialTheme.colors.primary,
     fontSize: 15,
     fontWeight: '700',
   },

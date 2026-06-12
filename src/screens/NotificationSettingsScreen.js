@@ -2,41 +2,75 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
 import { materialTheme } from '../theme';
+import { useDemoState } from '../config/demoState';
+import { translations } from '../constants/translations';
+
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
+
+const triggerHapticSuccess = async () => {
+  try {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  } catch (e) {}
+};
 
 export const NotificationSettingsScreen = ({ navigation }) => {
+  const { language } = useDemoState();
+  const t = translations[language] || translations.en;
+
   const [criticalAlerts, setCriticalAlerts] = useState(true);
   const [dailyAdvisories, setDailyAdvisories] = useState(true);
   const [weeklyMarket, setWeeklyMarket] = useState(false);
   const [systemAlerts, setSystemAlerts] = useState(true);
 
   const handleSave = () => {
+    triggerHapticSuccess();
     Alert.alert(
-      "Preferences Saved",
-      "Notification settings updated successfully.",
-      [{ text: "OK", onPress: () => navigation.goBack() }]
+      t.prefSavedTitle,
+      t.prefSavedMsg,
+      [{ text: t.ok, onPress: () => {
+        triggerHapticSelection();
+        navigation.goBack();
+      }}]
     );
+  };
+
+  const handleToggle = (setter, value) => {
+    triggerHapticSelection();
+    setter(value);
   };
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity 
+          onPress={() => {
+            triggerHapticSelection();
+            navigation.goBack();
+          }} 
+          style={styles.backBtn}
+        >
           <Feather name="arrow-left" size={22} color={materialTheme.colors.onSurface} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notification Settings</Text>
+        <Text style={styles.headerTitle}>{t.notifSettingsTitle}</Text>
         <View style={styles.headerSpacer} />
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>
           <View style={styles.switchRow}>
             <View style={styles.switchLabelContainer}>
-              <Text style={styles.switchLabel}>Critical Health Alerts</Text>
-              <Text style={styles.switchSub}>Immediate warnings about crop diseases and moisture drops</Text>
+              <Text style={styles.switchLabel}>{t.criticalHealthAlertsLabel}</Text>
+              <Text style={styles.switchSub}>{t.criticalHealthAlertsSub}</Text>
             </View>
             <Switch
               value={criticalAlerts}
-              onValueChange={setCriticalAlerts}
+              onValueChange={(val) => handleToggle(setCriticalAlerts, val)}
               trackColor={{ false: materialTheme.colors.outline, true: materialTheme.colors.primary }}
               thumbColor={criticalAlerts ? '#FFFFFF' : '#F4F3F0'}
             />
@@ -44,12 +78,12 @@ export const NotificationSettingsScreen = ({ navigation }) => {
 
           <View style={[styles.switchRow, { borderTopWidth: 1, borderTopColor: materialTheme.colors.outline }]}>
             <View style={styles.switchLabelContainer}>
-              <Text style={styles.switchLabel}>Daily Advisories</Text>
-              <Text style={styles.switchSub}>AI recommendations and localized weather insights</Text>
+              <Text style={styles.switchLabel}>{t.dailyAdvisoriesLabel}</Text>
+              <Text style={styles.switchSub}>{t.dailyAdvisoriesSub}</Text>
             </View>
             <Switch
               value={dailyAdvisories}
-              onValueChange={setDailyAdvisories}
+              onValueChange={(val) => handleToggle(setDailyAdvisories, val)}
               trackColor={{ false: materialTheme.colors.outline, true: materialTheme.colors.primary }}
               thumbColor={dailyAdvisories ? '#FFFFFF' : '#F4F3F0'}
             />
@@ -57,12 +91,12 @@ export const NotificationSettingsScreen = ({ navigation }) => {
 
           <View style={[styles.switchRow, { borderTopWidth: 1, borderTopColor: materialTheme.colors.outline }]}>
             <View style={styles.switchLabelContainer}>
-              <Text style={styles.switchLabel}>Weekly Market Reports</Text>
-              <Text style={styles.switchSub}>Price trends and local commodity market predictions</Text>
+              <Text style={styles.switchLabel}>{t.weeklyMarketLabel}</Text>
+              <Text style={styles.switchSub}>{t.weeklyMarketSub}</Text>
             </View>
             <Switch
               value={weeklyMarket}
-              onValueChange={setWeeklyMarket}
+              onValueChange={(val) => handleToggle(setWeeklyMarket, val)}
               trackColor={{ false: materialTheme.colors.outline, true: materialTheme.colors.primary }}
               thumbColor={weeklyMarket ? '#FFFFFF' : '#F4F3F0'}
             />
@@ -70,12 +104,12 @@ export const NotificationSettingsScreen = ({ navigation }) => {
 
           <View style={[styles.switchRow, { borderTopWidth: 1, borderTopColor: materialTheme.colors.outline }]}>
             <View style={styles.switchLabelContainer}>
-              <Text style={styles.switchLabel}>System Status</Text>
-              <Text style={styles.switchSub}>Updates on satellite pass status and sync alerts</Text>
+              <Text style={styles.switchLabel}>{t.systemStatusLabel}</Text>
+              <Text style={styles.switchSub}>{t.systemStatusSub}</Text>
             </View>
             <Switch
               value={systemAlerts}
-              onValueChange={setSystemAlerts}
+              onValueChange={(val) => handleToggle(setSystemAlerts, val)}
               trackColor={{ false: materialTheme.colors.outline, true: materialTheme.colors.primary }}
               thumbColor={systemAlerts ? '#FFFFFF' : '#F4F3F0'}
             />
@@ -83,7 +117,7 @@ export const NotificationSettingsScreen = ({ navigation }) => {
         </View>
 
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
-          <Text style={styles.saveBtnText}>Save Preferences</Text>
+          <Text style={styles.saveBtnText}>{t.savePreferences}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

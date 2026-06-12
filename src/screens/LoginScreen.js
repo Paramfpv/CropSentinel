@@ -2,28 +2,48 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+
 import { materialTheme } from '../theme';
 import { illustrations } from '../assets';
+import { useDemoState } from '../config/demoState';
+import { translations } from '../constants/translations';
+
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
 
 export const LoginScreen = ({ navigation }) => {
+  const { language } = useDemoState();
+  const t = translations[language] || translations.en;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const handleForgotPress = () => {
+    triggerHapticSelection();
     Alert.alert(
-      "Forgot Password",
-      "A password reset link has been simulated and sent to your email address.",
-      [{ text: "OK" }]
+      t.forgotPasswordTitle,
+      t.forgotPasswordMsg,
+      [{ text: t.ok }]
     );
   };
 
   const handleSocialPress = (platform) => {
+    triggerHapticSelection();
     Alert.alert(
-      "Social Integration",
-      `Simulating ${platform} OAuth integration for hackathon demo.`,
-      [{ text: "OK" }]
+      t.socialIntegrationTitle,
+      `${t.socialIntegrationMsg} (${platform})`,
+      [{ text: t.ok }]
     );
+  };
+
+  const handleLogin = () => {
+    triggerHapticSelection();
+    navigation.replace('MyFarms');
   };
 
   return (
@@ -32,8 +52,8 @@ export const LoginScreen = ({ navigation }) => {
 
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.welcome}>Welcome back! 👋</Text>
-          <Text style={styles.subtitle}>Login to continue</Text>
+          <Text style={styles.welcome}>{t.welcomeBack}</Text>
+          <Text style={styles.subtitle}>{t.loginToContinue}</Text>
         </View>
 
         <View style={styles.form}>
@@ -42,7 +62,7 @@ export const LoginScreen = ({ navigation }) => {
               <Feather name="mail" size={18} color={materialTheme.colors.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Email"
+                placeholder={t.email}
                 placeholderTextColor={materialTheme.colors.textSecondary}
                 value={email}
                 onChangeText={setEmail}
@@ -58,13 +78,19 @@ export const LoginScreen = ({ navigation }) => {
               <Feather name="lock" size={18} color={materialTheme.colors.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Password"
+                placeholder={t.password}
                 placeholderTextColor={materialTheme.colors.textSecondary}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
               />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+              <TouchableOpacity 
+                onPress={() => {
+                  triggerHapticSelection();
+                  setShowPassword(!showPassword);
+                }} 
+                style={styles.eyeBtn}
+              >
                 <Feather name={showPassword ? 'eye' : 'eye-off'} size={18} color={materialTheme.colors.textSecondary} />
               </TouchableOpacity>
             </View>
@@ -72,14 +98,14 @@ export const LoginScreen = ({ navigation }) => {
           </View>
 
           <TouchableOpacity style={styles.forgotBtn} onPress={handleForgotPress}>
-            <Text style={styles.forgotText}>Forgot Password?</Text>
+            <Text style={styles.forgotText}>{t.forgotPassword}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.loginBtn} onPress={() => navigation.replace('MyFarms')}>
-            <Text style={styles.loginText}>Login</Text>
+          <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
+            <Text style={styles.loginText}>{t.login}</Text>
           </TouchableOpacity>
 
-          <Text style={styles.orText}>or continue with</Text>
+          <Text style={styles.orText}>{t.orContinueWith}</Text>
 
           <View style={styles.socialRow}>
             <TouchableOpacity style={styles.socialBtn} onPress={() => handleSocialPress("Google")}>
@@ -93,9 +119,15 @@ export const LoginScreen = ({ navigation }) => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.signupRow} onPress={() => navigation.navigate('Onboarding')}>
-          <Text style={styles.signupText}>New farmer? </Text>
-          <Text style={styles.signupAction}>Create Account</Text>
+        <TouchableOpacity 
+          style={styles.signupRow} 
+          onPress={() => {
+            triggerHapticSelection();
+            navigation.navigate('Onboarding');
+          }}
+        >
+          <Text style={styles.signupText}>{t.newFarmer}</Text>
+          <Text style={styles.signupAction}>{t.createAccount}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

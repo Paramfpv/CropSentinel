@@ -1,16 +1,25 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Switch } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+
 import { materialTheme } from '../theme';
 import { avatars, illustrations } from '../assets';
 import { registerForPushNotificationsAsync } from '../services/notifications';
 import { useDemoState } from '../config/demoState';
 import { translations } from '../constants/translations';
 
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
+
 export const SettingsScreen = ({ navigation }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
+  
   const { 
     isDemoMode, 
     setDemoMode, 
@@ -22,20 +31,40 @@ export const SettingsScreen = ({ navigation }) => {
   } = useDemoState();
 
   const handleToggleNotifications = async (value) => {
+    triggerHapticSelection();
     setNotificationsEnabled(value);
     if (value) {
       await registerForPushNotificationsAsync();
     }
   };
 
+  const handleToggleDemoMode = (value) => {
+    triggerHapticSelection();
+    setDemoMode(value);
+    if (!value) {
+      setDroughtSimulated(false);
+    }
+  };
+
+  const handleLanguageChange = (lang) => {
+    triggerHapticSelection();
+    setLanguage(lang);
+    setIsLangDropdownOpen(false);
+  };
+
   const t = translations[language] || translations.en;
 
   const menuItems = [
     { icon: 'settings', label: t.accountSettings, route: 'AccountSettings' },
-    { icon: 'bell', label: t.notificationSettings, route: 'NotificationSettings' },
-    { icon: 'help-circle', label: t.helpSupport, route: 'HelpSupport' },
-    { icon: 'info', label: t.aboutCropSentinel, route: 'About' },
+    { icon: 'bell', label: t.notifSettingsTitle, route: 'NotificationSettings' },
+    { icon: 'help-circle', label: t.helpSupportHeader, route: 'HelpSupport' },
+    { icon: 'info', label: t.aboutHeader, route: 'About' },
   ];
+
+  const handleTabPress = (route) => {
+    triggerHapticSelection();
+    navigation.navigate(route);
+  };
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
@@ -56,7 +85,14 @@ export const SettingsScreen = ({ navigation }) => {
 
         <View style={styles.menuCard}>
           {menuItems.map((item, index) => (
-            <TouchableOpacity key={item.label} style={[styles.menuItem, index < menuItems.length - 1 && styles.menuItemBorder]} onPress={() => navigation.navigate(item.route)}>
+            <TouchableOpacity 
+              key={item.label} 
+              style={[styles.menuItem, index < menuItems.length - 1 && styles.menuItemBorder]} 
+              onPress={() => {
+                triggerHapticSelection();
+                navigation.navigate(item.route);
+              }}
+            >
               <View style={styles.menuLeft}>
                 <View style={styles.menuIconCircle}>
                   <Feather name={item.icon} size={18} color={materialTheme.colors.primary} />
@@ -76,7 +112,7 @@ export const SettingsScreen = ({ navigation }) => {
               </View>
               <View style={styles.flexShrink1}>
                 <Text style={styles.menuLabel}>{t.pushNotifications}</Text>
-                <Text style={styles.preferenceSublabel}>Receive alerts about farm health</Text>
+                <Text style={styles.preferenceSublabel}>{t.preferenceSublabel}</Text>
               </View>
             </View>
             <Switch
@@ -90,7 +126,10 @@ export const SettingsScreen = ({ navigation }) => {
           <View style={styles.dropdownContainer}>
             <TouchableOpacity 
               style={styles.preferenceItem}
-              onPress={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
+              onPress={() => {
+                triggerHapticSelection();
+                setIsLangDropdownOpen(!isLangDropdownOpen);
+              }}
               activeOpacity={0.7}
             >
               <View style={styles.menuLeft}>
@@ -98,7 +137,7 @@ export const SettingsScreen = ({ navigation }) => {
                   <Feather name="globe" size={18} color={materialTheme.colors.primary} />
                 </View>
                 <View style={styles.flexShrink1}>
-                  <Text style={styles.menuLabel}>Language / भाषा</Text>
+                  <Text style={styles.menuLabel}>{t.languageLabel}</Text>
                   <Text style={styles.preferenceSublabel}>{language === 'en' ? 'English' : 'हिन्दी'}</Text>
                 </View>
               </View>
@@ -108,10 +147,7 @@ export const SettingsScreen = ({ navigation }) => {
               <View style={styles.dropdownOptions}>
                 <TouchableOpacity
                   style={[styles.dropdownOption, language === 'en' && styles.dropdownOptionActive]}
-                  onPress={() => {
-                    setLanguage('en');
-                    setIsLangDropdownOpen(false);
-                  }}
+                  onPress={() => handleLanguageChange('en')}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.dropdownOptionText, language === 'en' && styles.dropdownOptionTextActive]}>English</Text>
@@ -119,10 +155,7 @@ export const SettingsScreen = ({ navigation }) => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.dropdownOption, language === 'hi' && styles.dropdownOptionActive, { borderBottomWidth: 0 }]}
-                  onPress={() => {
-                    setLanguage('hi');
-                    setIsLangDropdownOpen(false);
-                  }}
+                  onPress={() => handleLanguageChange('hi')}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.dropdownOptionText, language === 'hi' && styles.dropdownOptionTextActive]}>हिन्दी</Text>
@@ -136,7 +169,7 @@ export const SettingsScreen = ({ navigation }) => {
         <View style={[styles.menuCard, { marginTop: materialTheme.spacing.md }]}>
           <View style={styles.demoHeaderContainer}>
             <Text style={styles.demoTitle}>{t.demoMode}</Text>
-            <Text style={styles.demoDescription}>Enable a guided hackathon demonstration experience.</Text>
+            <Text style={styles.demoDescription}>{t.demoDesc}</Text>
           </View>
           <View style={styles.preferenceItem}>
             <View style={styles.menuLeft}>
@@ -145,17 +178,12 @@ export const SettingsScreen = ({ navigation }) => {
               </View>
               <View style={styles.flexShrink1}>
                 <Text style={styles.menuLabel}>{t.enableDemoScenario}</Text>
-                <Text style={styles.preferenceSublabel}>Toggles hackathon simulation mode</Text>
+                <Text style={styles.preferenceSublabel}>{t.demoToggleDesc}</Text>
               </View>
             </View>
             <Switch
               value={isDemoMode}
-              onValueChange={(value) => {
-                setDemoMode(value);
-                if (!value) {
-                  setDroughtSimulated(false);
-                }
-              }}
+              onValueChange={handleToggleDemoMode}
               trackColor={{ false: materialTheme.colors.outline, true: materialTheme.colors.primary }}
               thumbColor={isDemoMode ? '#FFFFFF' : '#F4F3F0'}
             />
@@ -163,20 +191,21 @@ export const SettingsScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
+      {/* Bottom Nav Bar */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('MyFarms')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('MyFarms')}>
           <Feather name="home" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.home}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('Farms')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('Farms')}>
           <Feather name="layers" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.farms}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('InterventionDetail')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('InterventionDetail')}>
           <Feather name="bar-chart-2" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.insights}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('AlertsFeed')}>
+        <TouchableOpacity style={styles.bottomNavItem} onPress={() => handleTabPress('AlertsFeed')}>
           <Feather name="bell" size={20} color={materialTheme.colors.textSecondary} />
           <Text style={styles.bottomNavText}>{t.alerts}</Text>
         </TouchableOpacity>
@@ -307,6 +336,7 @@ const styles = StyleSheet.create({
     paddingBottom: materialTheme.spacing.md,
     borderTopWidth: 1,
     borderTopColor: materialTheme.colors.outline,
+    zIndex: 100,
   },
   bottomNavItem: {
     alignItems: 'center',

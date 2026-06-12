@@ -2,34 +2,56 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
 import { materialTheme } from '../theme';
 import { useDemoState } from '../config/demoState';
+import { translations } from '../constants/translations';
+
+const triggerHapticSelection = async () => {
+  try {
+    await Haptics.selectionAsync();
+  } catch (e) {}
+};
+
+const triggerHapticSuccess = async () => {
+  try {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  } catch (e) {}
+};
 
 export const AccountSettingsScreen = ({ navigation }) => {
-  const { profileName, profileEmail, setProfileName, setProfileEmail } = useDemoState();
+  const { language, profileName, profileEmail, setProfileName, setProfileEmail } = useDemoState();
+  const t = translations[language] || translations.en;
+
   const [name, setName] = useState(profileName);
   const [email, setEmail] = useState(profileEmail);
 
   const handleSave = () => {
+    triggerHapticSelection();
     if (!name.trim()) {
-      Alert.alert("ValidationError", "Please enter your name.");
+      Alert.alert(t.validationError, t.enterValidName);
       return;
     }
     if (!email.trim() || !email.includes('@')) {
-      Alert.alert("ValidationError", "Please enter a valid email address.");
+      Alert.alert(t.validationError, t.enterValidEmail);
       return;
     }
 
     setProfileName(name.trim());
     setProfileEmail(email.trim());
 
+    triggerHapticSuccess();
     Alert.alert(
-      "Success",
-      "Account settings updated successfully.",
+      t.success,
+      t.settingsUpdated,
       [
         {
-          text: "OK",
-          onPress: () => navigation.goBack()
+          text: t.ok,
+          onPress: () => {
+            triggerHapticSelection();
+            navigation.goBack();
+          }
         }
       ]
     );
@@ -38,31 +60,37 @@ export const AccountSettingsScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity 
+          onPress={() => {
+            triggerHapticSelection();
+            navigation.goBack();
+          }} 
+          style={styles.backBtn}
+        >
           <Feather name="arrow-left" size={22} color={materialTheme.colors.onSurface} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Account Settings</Text>
+        <Text style={styles.headerTitle}>{t.accountSettings}</Text>
         <View style={styles.headerSpacer} />
       </View>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Full Name</Text>
+          <Text style={styles.fieldLabel}>{t.fullNameLabel}</Text>
           <TextInput
             style={styles.textInput}
             value={name}
             onChangeText={setName}
-            placeholder="Enter your name"
+            placeholder={t.enterName}
             placeholderTextColor={materialTheme.colors.textSecondary}
           />
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Email Address</Text>
+          <Text style={styles.fieldLabel}>{t.emailAddressLabel}</Text>
           <TextInput
             style={styles.textInput}
             value={email}
             onChangeText={setEmail}
-            placeholder="Enter your email"
+            placeholder={t.enterEmail}
             placeholderTextColor={materialTheme.colors.textSecondary}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -70,7 +98,7 @@ export const AccountSettingsScreen = ({ navigation }) => {
         </View>
 
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>Save Changes</Text>
+          <Text style={styles.saveBtnText}>{t.saveChanges}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
