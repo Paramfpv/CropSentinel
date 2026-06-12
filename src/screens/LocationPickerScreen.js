@@ -36,12 +36,12 @@ export const LocationPickerScreen = ({ navigation, route }) => {
 
   const mapRef = useRef(null);
 
-  // Set default center to India (Ahmedabad area as requested in demo references)
+  // Set default center to Vadodara, Gujarat as requested
   const [region, setRegion] = useState({
-    latitude: 23.0225,
-    longitude: 72.5714,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
+    latitude: 22.3072,
+    longitude: 73.1812,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
   });
 
   const [selectedCoordinate, setSelectedCoordinate] = useState(null);
@@ -49,7 +49,36 @@ export const LocationPickerScreen = ({ navigation, route }) => {
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
 
-  // Initialize coordinate if passed from screen
+  const attemptAutoLocation = async () => {
+    try {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        if (loc && loc.coords) {
+          const { latitude, longitude } = loc.coords;
+          const coords = { latitude, longitude };
+          setSelectedCoordinate(coords);
+          const newReg = {
+            latitude,
+            longitude,
+            latitudeDelta: 0.012,
+            longitudeDelta: 0.012,
+          };
+          setRegion(newReg);
+          if (mapRef.current) {
+            mapRef.current.animateToRegion(newReg, 500);
+          }
+          reverseGeocode(latitude, longitude);
+        }
+      }
+    } catch (e) {
+      console.warn('Auto location detection failed:', e);
+    }
+  };
+
+  // Initialize coordinate if passed from screen, or auto-detect if permission granted
   useEffect(() => {
     const initialLoc = route.params?.initialLocation;
     if (initialLoc && initialLoc.latitude && initialLoc.longitude) {
@@ -64,6 +93,8 @@ export const LocationPickerScreen = ({ navigation, route }) => {
         longitudeDelta: 0.015,
       });
       reverseGeocode(coords.latitude, coords.longitude);
+    } else {
+      attemptAutoLocation();
     }
   }, [route.params?.initialLocation]);
 
@@ -184,7 +215,7 @@ export const LocationPickerScreen = ({ navigation, route }) => {
           pitchEnabled={true}
           rotateEnabled={true}
           scrollEnabled={true}
-          mapType="none" // To prevent Google/Apple base maps from loading and bypass API keys
+          mapType="standard" // standard map type enables tile engines on all platforms
         >
           <UrlTile
             urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -87,11 +87,24 @@ export const MyFarmsScreen = ({ navigation }) => {
       ]);
 
       // Calculate critical alerts count
-      const critAlerts = (alertsData || []).filter(item => {
-        const idStr = String(item.id);
-        return idStr === '1' || idStr === '100' || item.severity === 'high';
-      });
-      setCriticalCount(critAlerts.length);
+      let critCount = 0;
+      if (isDemoMode) {
+        const critAlerts = (alertsData || []).filter(item => {
+          const idStr = String(item.id);
+          return idStr === '1' || idStr === '100' || item.severity === 'high';
+        });
+        critCount = critAlerts.length;
+      } else {
+        if (farmsList && farmsList.length > 0) {
+          const critAlerts = (alertsData || []).filter(item => {
+            return item.severity === 'high';
+          });
+          critCount = critAlerts.length;
+        } else {
+          critCount = 0;
+        }
+      }
+      setCriticalCount(critCount);
 
       // Load farms list to determine highest-risk farm
       if (isDemoMode) {
@@ -310,15 +323,22 @@ export const MyFarmsScreen = ({ navigation }) => {
         }
       >
         {/* Weather Row */}
-        <View style={styles.weatherRow}>
-          {weatherItems.map((item) => (
-            <View key={item.label} style={styles.weatherCard}>
-              <Feather name={item.icon} size={18} color={materialTheme.colors.primary} />
-              <Text style={styles.weatherValue}>{item.value}</Text>
-              <Text style={styles.weatherLabel}>{item.label}</Text>
-            </View>
-          ))}
-        </View>
+        {isDemoMode ? (
+          <View style={styles.weatherRow}>
+            {weatherItems.map((item) => (
+              <View key={item.label} style={styles.weatherCard}>
+                <Feather name={item.icon} size={18} color={materialTheme.colors.primary} />
+                <Text style={styles.weatherValue}>{item.value}</Text>
+                <Text style={styles.weatherLabel}>{item.label}</Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.weatherUnavailableCard}>
+            <Feather name="cloud-off" size={20} color={materialTheme.colors.textSecondary} style={{ marginRight: 8 }} />
+            <Text style={styles.weatherUnavailableText}>Weather data unavailable.</Text>
+          </View>
+        )}
 
         {error && (
           <View style={styles.errorContainer}>
@@ -327,14 +347,15 @@ export const MyFarmsScreen = ({ navigation }) => {
         )}
 
         {/* Critical Alerts Banner */}
-        <TouchableOpacity
-          style={[
-            styles.alertsBanner,
-            criticalCount > 0 ? styles.alertsBannerCritical : styles.alertsBannerStable
-          ]}
-          onPress={() => navigateToTab('AlertsFeed')}
-          activeOpacity={0.85}
-        >
+        {farms.length > 0 && (
+          <TouchableOpacity
+            style={[
+              styles.alertsBanner,
+              criticalCount > 0 ? styles.alertsBannerCritical : styles.alertsBannerStable
+            ]}
+            onPress={() => navigateToTab('AlertsFeed')}
+            activeOpacity={0.85}
+          >
           <View style={styles.alertsBannerLeft}>
             <Feather
               name={criticalCount > 0 ? "alert-triangle" : "check-circle"}
@@ -358,6 +379,7 @@ export const MyFarmsScreen = ({ navigation }) => {
             color={criticalCount > 0 ? materialTheme.colors.error : materialTheme.colors.success}
           />
         </TouchableOpacity>
+        )}
 
         {/* Highest-Risk Farm Highlight Card */}
         {highestRiskFarm ? (
@@ -598,6 +620,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: materialTheme.colors.outline,
+  },
+  weatherUnavailableCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F9F9F6',
+    borderWidth: 1,
+    borderColor: materialTheme.colors.outline,
+    borderRadius: materialTheme.borderRadius.card,
+    paddingVertical: 18,
+    marginHorizontal: materialTheme.spacing.lg,
+    marginBottom: materialTheme.spacing.sm,
+  },
+  weatherUnavailableText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: materialTheme.colors.textSecondary,
   },
   weatherValue: {
     fontSize: 16,

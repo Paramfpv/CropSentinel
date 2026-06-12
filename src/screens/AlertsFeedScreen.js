@@ -71,66 +71,98 @@ export const AlertsFeedScreen = ({ navigation }) => {
         throw new Error('No alerts data received');
       }
 
-      let activeFarmId = 3; // default fallback
-      if (farmsList && farmsList.length > 0) {
-        activeFarmId = farmsList[0].id;
+      if (!isDemoMode && (!farmsList || farmsList.length === 0)) {
+        setAlerts([]);
+        setLoading(false);
+        setRefreshing(false);
+        return;
       }
-      
-      const mapped = (data || []).map(item => {
-        const isNewContract = item.message !== undefined;
-        
-        const idStr = String(item.id);
-        const title = isNewContract ? item.message : (item.title || item.action || 'Attention Needed');
-        const time = isNewContract ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (item.timestamp || item.time || 'Recent');
-        const description = isNewContract ? `Status: ${item.status || 'sent'}` : (item.description || (item.cost_inr ? `Estimated intervention cost: ₹${item.cost_inr}` : ''));
-        const farmName = isNewContract ? 'Marathwada Sugarcane Farm' : (item.farm_name || item.farmName || 'Farm Alert');
-        
-        let severity = item.severity || 'medium';
-        let icon = 'alert-circle';
-        let iconColor = materialTheme.colors.warning;
-        
-        if (idStr === '1' || idStr === '100' || severity === 'high') {
-          severity = 'high';
-          icon = 'fire';
-          iconColor = materialTheme.colors.error;
-        } else if (idStr === '2' || severity === 'low') {
-          severity = 'low';
-          icon = 'sprout';
-          iconColor = materialTheme.colors.success;
-        } else if (idStr === '3' || severity === 'medium') {
-          severity = 'medium';
-          icon = 'weather-sunny';
-          iconColor = materialTheme.colors.warning;
-        }
-        
-        // Translate title and description for mock alerts in Hindi
-        let translatedTitle = title;
-        let translatedDesc = description;
-        if (language === 'hi') {
-          if (title.includes('Critical drought stress')) {
-            translatedTitle = 'गंभीर सूखा तनाव का पता चला।';
-          } else if (title.includes('Increase irrigation')) {
-            translatedTitle = 'अगले 5 दिनों में सिंचाई 20% बढ़ाएं';
+
+      const mapped = (data || [])
+        .filter(item => {
+          if (!isDemoMode) {
+            return item.message !== undefined;
+          }
+          return true;
+        })
+        .map(item => {
+          const isNewContract = item.message !== undefined;
+          
+          const idStr = String(item.id);
+          const title = isNewContract ? item.message : (item.title || item.action || 'Attention Needed');
+          const time = isNewContract ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (item.timestamp || item.time || 'Recent');
+          const description = isNewContract ? `Status: ${item.status || 'sent'}` : (item.description || (item.cost_inr ? `Estimated intervention cost: ₹${item.cost_inr}` : ''));
+          
+          let activeFarmId = 3;
+          let farmName = 'Farm Alert';
+          if (farmsList && farmsList.length > 0) {
+            const matchedFarm = farmsList.find(f => String(f.id) === String(item.farm_id)) || farmsList[0];
+            activeFarmId = matchedFarm.id;
+            farmName = matchedFarm.farm_name || matchedFarm.name || 'Farm Alert';
           }
           
-          if (description.includes('Status: sent')) {
-            translatedDesc = 'स्थिति: भेजा गया';
+          if (isDemoMode && isNewContract) {
+            farmName = 'Marathwada Sugarcane Farm';
           }
-        }
-        
-        return {
-          id: idStr,
-          farmId: activeFarmId,
-          farmName: language === 'hi' && farmName.includes('Marathwada') ? 'मराठवाड़ा गन्ना फार्म' : farmName,
-          title: translatedTitle,
-          description: translatedDesc,
-          time,
-          severity,
-          icon,
-          iconColor,
-        };
-      });
-      
+          
+          let severity = item.severity || 'medium';
+          let icon = 'alert-circle';
+          let iconColor = materialTheme.colors.warning;
+          
+          const isCrit = isDemoMode
+            ? (idStr === '1' || idStr === '100' || severity === 'high')
+            : (severity === 'high');
+            
+          const isLow = isDemoMode
+            ? (idStr === '2' || severity === 'low')
+            : (severity === 'low');
+            
+          const isMed = isDemoMode
+            ? (idStr === '3' || severity === 'medium')
+            : (severity === 'medium');
+
+          if (isCrit) {
+            severity = 'high';
+            icon = 'fire';
+            iconColor = materialTheme.colors.error;
+          } else if (isLow) {
+            severity = 'low';
+            icon = 'sprout';
+            iconColor = materialTheme.colors.success;
+          } else if (isMed) {
+            severity = 'medium';
+            icon = 'weather-sunny';
+            iconColor = materialTheme.colors.warning;
+          }
+          
+          // Translate title and description for mock alerts in Hindi
+          let translatedTitle = title;
+          let translatedDesc = description;
+          if (language === 'hi') {
+            if (title.includes('Critical drought stress')) {
+              translatedTitle = 'गंभीर सूखा तनाव का पता चला।';
+            } else if (title.includes('Increase irrigation')) {
+              translatedTitle = 'अगले 5 दिनों में सिंचाई 20% बढ़ाएं';
+            }
+            
+            if (description.includes('Status: sent')) {
+              translatedDesc = 'स्थिति: भेजा गया';
+            }
+          }
+          
+          return {
+            id: idStr,
+            farmId: activeFarmId,
+            farmName: language === 'hi' && farmName.includes('Marathwada') ? 'मराठवाड़ा गन्ना फार्म' : farmName,
+            title: translatedTitle,
+            description: translatedDesc,
+            time,
+            severity,
+            icon,
+            iconColor,
+          };
+        });
+
       setAlerts(mapped);
     } catch (err) {
       console.warn('Failed to load alerts:', err);
