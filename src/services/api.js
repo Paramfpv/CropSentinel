@@ -90,7 +90,7 @@ export const createFarm = async (farmData) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  console.log('[createFarm] Request Payload:', JSON.stringify(payload, null, 2));
+
 
   const response = await fetch(url, {
     method: 'POST',
@@ -98,13 +98,13 @@ export const createFarm = async (farmData) => {
     body: JSON.stringify(payload),
   });
 
-  console.log('[createFarm] Raw Response Status:', response.status);
+
 
   if (!response.ok) {
     let errMsg = `API request failed with status: ${response.status}`;
     try {
       const errJson = await response.json();
-      console.log('[createFarm] Error JSON Response:', JSON.stringify(errJson, null, 2));
+
       if (errJson && errJson.detail) {
         if (Array.isArray(errJson.detail)) {
           errMsg += ` - ${errJson.detail.map(d => d.msg).join(', ')}`;
@@ -114,14 +114,14 @@ export const createFarm = async (farmData) => {
       }
     } catch (e) {
       const textErr = await response.text().catch(() => '');
-      console.log('[createFarm] Error Text Response:', textErr);
+
       if (textErr) errMsg += ` - ${textErr}`;
     }
     throw new Error(errMsg);
   }
 
   const json = await response.json();
-  console.log('[createFarm] Parsed JSON Response:', JSON.stringify(json, null, 2));
+
   return json;
 };
 

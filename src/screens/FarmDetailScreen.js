@@ -168,11 +168,7 @@ export const FarmDetailScreen = ({ navigation, route }) => {
   const farmId = route.params?.farmId;
   const [farmInfo, setFarmInfo] = useState(null);
 
-  useEffect(() => {
-    if (farmId) {
-      console.log('[NAV] Opening FarmDetail with farmId:', farmId);
-    }
-  }, [farmId]);
+
 
   const loadData = async () => {
     setLoading(true);
@@ -286,8 +282,6 @@ export const FarmDetailScreen = ({ navigation, route }) => {
           longitude: lon,
         });
 
-        console.log('[ANALYZE] Sending farmId:', farmIdNum);
-        console.log('[HISTORY] Sending farmId:', farmIdNum);
 
         const [analyzeRes, histRes, mktRes] = await Promise.all([
           postAnalyze({ latitude: lat, longitude: lon, farm_id: farmIdNum }),

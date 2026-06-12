@@ -152,7 +152,7 @@ export const AddFieldScreen = ({ navigation, route }) => {
       longitude: (location && Number.isFinite(location.longitude)) ? parseFloat(location.longitude.toFixed(4)) : 0.0
     };
 
-    console.log("D6 Backend Payload:", JSON.stringify(payload, null, 2));
+
     setLoading(true);
 
     try {
@@ -182,8 +182,6 @@ export const AddFieldScreen = ({ navigation, route }) => {
     setShowSuccess(false);
     
     const exactId = parseInt(savedFarmIdRef.current || savedFarmId || farmToEdit?.id);
-    console.log('[NAV] Opening FarmDetail with farmId:', exactId);
-
     navigation.navigate('FarmDetail', { farmId: exactId });
   };
 
