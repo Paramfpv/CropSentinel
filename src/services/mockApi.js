@@ -263,14 +263,15 @@ export const getMarketHistory = async () => {
   ];
 };
 
-export const login = async (phoneNumber) => {
+export const login = async (credentialPayload) => {
   await delay(500);
+  const identifier = credentialPayload?.phone_number || credentialPayload?.email || 'demo_user';
   return {
     access_token: 'mock_jwt_token_12345',
     token_type: 'bearer',
     user: {
       id: 1,
-      phone_number: phoneNumber,
+      phone_number: identifier,
     },
   };
 };
