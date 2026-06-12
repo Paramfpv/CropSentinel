@@ -1,136 +1,146 @@
-# CropSentinel Mobile — Pre-D6 Testing Guide
+# CropSentinel — Testing Guide
 
-This guide is designed to help remote team members (Param, Aayush, and Mobile QA) install, validate, and test the CropSentinel Mobile app independently before the backend services are integrated in D6.
-
----
-
-## SECTION 1 — INSTALLATION
-
-There are two ways to run and test this preview release:
-
-### Option A: Install the Preview APK (Recommended for Android Devs)
-1. Download the generated APK from the download link provided in the QA package: [Download Preview APK](https://expo.dev/artifacts/eas/crop-sentinel-preview.apk) (or run the build manually if needed, see below).
-2. Open your device settings and allow installations from **Unknown Sources**.
-3. Install the downloaded `CropSentinel-preview.apk` file on your device.
-4. Open the application.
-
-* **Expected Result**: The CropSentinel custom Agritech splash screen appears, followed by the Onboarding/Welcome experience.
-
-### Option B: Run via Expo Go (Immediate Validation on iOS & Android)
-If you don't have the APK installed, you can test it directly on any physical device via Expo Go:
-1. Install **Expo Go** from the Google Play Store or Apple App Store.
-2. In the project root workspace, run:
-   ```bash
-   npx expo start
-   ```
-3. Scan the generated QR code using your phone camera (iOS) or the Expo Go app (Android).
+**Version:** v1.0.0 | **Branch:** `yesh/mobile` | **Build Date:** 2026-06-12
 
 ---
 
-## SECTION 2 — DEMO MODE TEST
+## 1. Installation
 
-1. Complete the onboarding screen and tap **Get Started**.
-2. Log in (tap the Login button on the Auth screen).
-3. Navigate to **Profile Settings** (tap the Settings gear icon in the header).
-4. Locate the **Demo Mode** section and toggle the switch to **ON**.
-5. Navigate back to the Home/Dashboard screen.
+### Option A — Expo Go (Recommended for testers)
+1. Install **Expo Go** from the Play Store or App Store.
+2. Scan the QR code provided by the development team (`npx expo start`).
+3. The app bundles and launches on your device.
 
-* **Expected Result**: A green "DEMO MODE ACTIVE" simulation banner is displayed at the top of the screen.
-* **Pass Criteria**: The switch toggles smoothly and no screen crashes or freezes occur.
-
----
-
-## SECTION 3 — FARM DETAIL TEST
-
-1. From the My Farms list dashboard, select **Marathwada Sugarcane Farm**.
-2. Review the overall health score displayed inside the animated circle metric.
-3. Scroll down to the satellite card overlay displaying the green crop boundary polygon.
-
-* **Expected Result**: All metrics (NDVI, Soil Moisture, Weather Risk, Mandi Market Risk) and the satellite placeholder preview card render properly.
-* **Pass Criteria**: Layout renders clean visual card spacing with no overlapping text.
+### Option B — Preview APK (Android only)
+1. Download the APK from the link provided in the release.
+2. On your Android device: **Settings → Security → Install unknown apps → Allow**.
+3. Open the downloaded APK file and tap **Install**.
+4. Launch **CropSentinel** from your home screen.
 
 ---
 
-## SECTION 4 — SIMULATE DROUGHT TEST
+## 2. Login Instructions
 
-1. With **Demo Mode** enabled, open the **Marathwada Sugarcane Farm** details screen.
-2. Locate the yellow **Simulate Drought** action button.
-3. Tap **Simulate Drought**.
+CropSentinel uses **passwordless authentication** — no password required.
 
-* **Expected Result**: The health score smoothly animated-counts down to `41`, and the satellite preview card highlights the drought risk boundary.
-* **Pass Criteria**: All states transition seamlessly without crashes or freezing.
+### Valid Input Formats
+| Format | Example |
+|:---|:---|
+| Indian mobile number | `9876543210` (10 digits, starts with 6–9) |
+| Email address | `user@example.com` |
 
----
+### Steps
+1. Open the app → **Login** screen appears automatically.
+2. Enter your phone number or email in the input field.
+   - A ✓ green border confirms valid format.
+   - A ✗ red border with helper text confirms invalid format.
+3. The **Login** button only activates when input is valid.
+4. Tap **Login** — the app authenticates with the backend and navigates to the Home screen.
 
-## SECTION 5 — ALERTS TEST
-
-1. Navigate to the **Alerts** feed screen (tap the Bell icon on the bottom navigation bar).
-2. Review the generated lists of active alerts.
-
-* **Expected Result**: Dynamic warnings like "Critical Moisture Drop" or "NDVI Alert" are listed with priority chips.
-* **Pass Criteria**: The list loads successfully without showing an empty page.
-
----
-
-## SECTION 6 — INTERVENTION TEST
-
-1. Tap on any alert in the alerts feed to view its **Intervention Detail** screen.
-2. Review the recommended actions, cost estimates, and risk charts.
-3. Tap the **Apply Recommendation** (or **Take Action**) button.
-
-* **Expected Result**: An animated success dialog appears confirming the action, and a local notification is successfully pushed to the device status tray.
-* **Pass Criteria**: The modal completes the action successfully and notification is received.
+> **Note:** The backend is hosted on a free server tier. The **first login after a period of inactivity may take 30–50 seconds** while the server wakes up. Subsequent requests are fast.
 
 ---
 
-## SECTION 7 — ADD FARM TEST
+## 3. Test Scenarios
 
-1. Tap the floating **Add Farm** button (`+` icon) on the My Farms dashboard screen.
-2. Enter a **Farm Name** (e.g., "South Field").
-3. Select **Crop Type** from the dropdown menu (e.g., "Wheat").
-4. Select **Soil Type** from the dropdown menu (e.g., "Sandy").
-5. Tap **Choose Farm Location** to open the coordinates picker screen.
-6. Enter manual coordinates:
-   - **Latitude**: e.g., `22.5937` (Must be between -90 and 90)
-   - **Longitude**: e.g., `78.9629` (Must be between -180 and 180)
-7. Tap **Use Coordinates**.
-8. Tap **Save Field**.
+### 3.1 Authentication
+| Scenario | Steps | Expected |
+|:---|:---|:---|
+| Valid phone login | Enter `9876543210`, tap Login | Home screen loads |
+| Valid email login | Enter `user@example.com`, tap Login | Home screen loads |
+| Invalid phone (short) | Enter `12345` | Red border + helper text; button disabled |
+| Invalid phone (wrong prefix) | Enter `1234567890` | Red border + helper text |
+| Invalid email | Enter `test@gmail` | Red border + helper text |
+| Empty input + Login press | Tap Login with empty field | Alert dialog shown |
 
-* **Expected Result**: An animated confirmation dialog appears showing the prepared JSON payload ready for D6 backend integration.
-* **Pass Criteria**: Coordinates return successfully to the Add Farm fields, form validation accepts the values, and the save flow succeeds.
+### 3.2 Farm Management
+| Scenario | Steps | Expected |
+|:---|:---|:---|
+| View farm list | Tap **Farms** tab | All created farms listed |
+| Add a farm | Tap **+** → Fill name, lat/lon → Save | Farm appears in list; Farm Detail opens |
+| Open farm details | Tap any farm card | Detail screen with NDVI, Moisture, Weather Risk, Market Risk, Satellite Analysis |
+| Search farms | Use search bar in Farms screen | List filters in real-time |
+| Delete a farm | Long-press or swipe a farm → Delete | Farm removed from list |
+
+### 3.3 Backend Integration
+| Endpoint | Trigger | Expected |
+|:---|:---|:---|
+| `POST /auth/login` | Login screen | JWT token returned, navigates home |
+| `GET /farm/list` | Farms screen load | Real farms list populated |
+| `POST /farm/create` | Add Field → Save | `farm_id` returned, navigation uses that ID |
+| `POST /analyze` | Open any farm detail | Satellite Analysis Summary card populated |
+| `GET /history/{farm_id}` | Open any farm detail | NDVI trend chart populated |
+
+### 3.4 Home Dashboard
+| Scenario | Expected |
+|:---|:---|
+| Home screen load | Weather row visible; Highest-Risk Farm card shows; AI Recommendation card shows |
+| Pull-to-refresh | Data reloads from backend |
+
+### 3.5 Alerts
+| Scenario | Expected |
+|:---|:---|
+| Open Alerts tab | Alert cards load with severity colours (red/yellow) |
+| Pull-to-refresh | Alerts reload |
+| Tap an alert | Navigates to Intervention Detail |
+
+### 3.6 Interventions
+| Scenario | Expected |
+|:---|:---|
+| Open Insights tab | Recommendation card with cost, risk, confidence |
+| Tap **Apply Recommendation** | Success dialog appears |
+| Tap **Share** | Native share sheet opens |
+
+### 3.7 Settings
+| Scenario | Expected |
+|:---|:---|
+| Language → Hindi | All labels switch to Hindi |
+| Language → English | Labels switch back |
+| Demo Mode ON | Demo banner visible; drought toggle appears on Farm Detail |
+| Demo Mode OFF | Real backend mode; no demo banner |
+| Notifications toggle | Toggle state persists |
+
+### 3.8 Demo Mode Scenarios
+| Scenario | Expected |
+|:---|:---|
+| Demo ON, open Sugarcane Farm | Health 78, NDVI 0.65, LOW risk |
+| Demo ON, simulate drought | Health 41, NDVI 0.22, HIGH risk; Satellite Summary shows STRESSED |
+| Demo ON, view Intervention | Action updates to "Increase irrigation within 48 hours" |
 
 ---
 
-## SECTION 8 — LANGUAGE TEST
+## 4. Bug Reporting Template
 
-1. Go to **Settings** (gear icon in header).
-2. Tap the language selector toggle or profile language settings.
-3. Select **Hindi** or another alternate option.
-4. Navigate back to the Home screen.
+```
+**Bug Title:** [Short description]
 
-* **Expected Result**: Text labels switch languages appropriately.
-* **Pass Criteria**: Transitions run without crashes.
+**App Version:** v1.0.0
+**Device:** [e.g. Samsung Galaxy S21, Android 13]
+**Mode:** [Demo / Real]
+
+**Steps to Reproduce:**
+1.
+2.
+3.
+
+**Expected Behaviour:**
+[What should happen]
+
+**Actual Behaviour:**
+[What actually happened]
+
+**Screenshot / Screen Recording:**
+[Attach if available]
+
+**Console Output (if available):**
+[Paste any error messages]
+```
 
 ---
 
-## SECTION 9 — GENERAL UX FEEDBACK
+## 5. Known Limitations
 
-Please report back to the engineering team on the following items:
-* **Ease of navigation**: Did you find it easy to navigate between screens?
-* **Visual appeal**: How does the visual theme, spacing, and transition styling feel?
-* **Confusing interactions**: Were there any buttons or behaviors that felt unintuitive?
-* **Bugs encountered**: List any unexpected errors or warnings.
-* **Suggestions**: Any improvement suggestions before we freeze the release for D6.
-
----
-
-### Manual EAS Build Generation Instructions
-If you need to generate a new APK build yourself using your Expo Account:
-1. Authenticate with your credentials:
-   ```bash
-   npx eas-cli login
-   ```
-2. Build the Android preview:
-   ```bash
-   npx eas-cli build --platform android --profile preview
-   ```
+- **Backend cold-start:** First login after inactivity = 30–50 s wait. This is a free-tier Render limitation.
+- **Edit/Delete farm:** Local state update only; backend PUT/DELETE endpoints are not implemented server-side.
+- **Social login (Google/Apple):** Shows informational alert only — not implemented.
+- **GPS picker:** Coordinates are entered manually.
