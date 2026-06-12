@@ -88,9 +88,17 @@ The live backend interactive API Swagger docs can be accessed at:
 
 ---
 
-## Future Enhancements
+## Known Limitations
 
-* **Farm Boundary Drawing**: Interactive polygon boundary mapping.
+* **Location Input**: Interactive map coordinate selection was replaced with current location GPS queries and manual coordinate entry to prioritize client-side submission stability.
+* **Weather Dependency**: External weather metrics depend entirely on Open-Meteo service availability and cached lookups.
+* **Boundary Visuals**: Farm polygon boundary drawing is planned for future releases (currently displays visual placeholders).
+
+---
+
+## Future Improvements
+
+* **Push Notifications**: Remote cloud alert broadcasts for critical warnings.
 * **Offline Synchronization**: Core database storage for editing/adding farms without active internet.
-* **Push Notifications**: Remote cloud alert broadcasts.
-* **Advanced Satellite Visualizations**: Interactive indices overlays.
+* **Farm Boundary Mapping**: Advanced interactive polygon drawing.
+* **Advanced Satellite Analytics**: Interactive multispectral index overlays (NDVI, NDWI, EVI).
