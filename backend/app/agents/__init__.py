@@ -1,3 +1,0 @@
-"""
-Specialized CropSentinel Agents package.
-"""
