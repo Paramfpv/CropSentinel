@@ -215,14 +215,14 @@ export const LocationPickerScreen = ({ navigation, route }) => {
           pitchEnabled={true}
           rotateEnabled={true}
           scrollEnabled={true}
-          mapType="standard" // standard map type enables tile engines on all platforms
+          mapType={Platform.OS === 'android' ? 'none' : 'standard'}
         >
-          {/* <UrlTile
+          <UrlTile
             urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             maximumZ={19}
             tileSize={256}
-            shouldReplaceMapContent={true}
-          /> */}
+            shouldReplaceMapContent={Platform.OS === 'ios'}
+          />
           {selectedCoordinate && (
             <Marker 
               coordinate={selectedCoordinate}
@@ -323,7 +323,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   map: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   gpsBtn: {
     position: 'absolute',
