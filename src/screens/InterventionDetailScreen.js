@@ -83,7 +83,7 @@ export const InterventionDetailScreen = ({ navigation, route }) => {
     if (!details) return;
     
     setIsApplying(true);
-    const farmId = route.params?.farmId || 3;
+    const farmId = route.params?.farmId || details?.farmId || 3;
     
     try {
       await submitIntervention(farmId, {
@@ -124,6 +124,7 @@ export const InterventionDetailScreen = ({ navigation, route }) => {
       if (dashboard && dashboard.recommendation) {
         const rec = dashboard.recommendation;
         setDetails({
+          farmId: dashboard.farm?.id || 1,
           action: rec.action || 'Irrigate within 48 hours',
           description: 'Timely action recommended by CropSentinel AI.',
           irrigation: '35 mm',
@@ -142,6 +143,7 @@ export const InterventionDetailScreen = ({ navigation, route }) => {
         const fallback = await getIntervention();
         if (fallback) {
           setDetails({
+            farmId: fallback.farm_id || 3,
             action: fallback.action ? fallback.action.split(' - ')[0] : 'Irrigate immediately',
             description: fallback.action ? fallback.action.split(' - ')[1] : 'Moisture level critically low',
             irrigation: fallback.irrigation_mm ? `${fallback.irrigation_mm} mm` : '35 mm',

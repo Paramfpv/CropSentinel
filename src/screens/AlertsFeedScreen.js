@@ -6,7 +6,7 @@ import * as Haptics from 'expo-haptics';
 
 import { materialTheme } from '../theme';
 import { illustrations } from '../assets';
-import { fetchAlerts } from '../services';
+import { fetchAlerts, fetchDashboard } from '../services';
 import { LoadingState } from '../components/LoadingState';
 import { ErrorState } from '../components/ErrorState';
 import { useDemoState } from '../config/demoState';
@@ -62,9 +62,18 @@ export const AlertsFeedScreen = ({ navigation }) => {
     setError(null);
     
     try {
-      const data = await fetchAlerts();
+      const [data, dash] = await Promise.all([
+        fetchAlerts(),
+        fetchDashboard().catch(() => null)
+      ]);
+
       if (!data) {
         throw new Error('No alerts data received');
+      }
+
+      let activeFarmId = 3; // default fallback
+      if (dash && dash.farm) {
+        activeFarmId = dash.farm.id;
       }
       
       const mapped = (data || []).map(item => {
@@ -111,6 +120,7 @@ export const AlertsFeedScreen = ({ navigation }) => {
         
         return {
           id: idStr,
+          farmId: activeFarmId,
           farmName: language === 'hi' && farmName.includes('Marathwada') ? 'मराठवाड़ा गन्ना फार्म' : farmName,
           title: translatedTitle,
           description: translatedDesc,
@@ -172,7 +182,7 @@ export const AlertsFeedScreen = ({ navigation }) => {
         style={[styles.alertCard, { borderLeftColor: item.iconColor }]}
         onPress={() => {
           triggerHapticSelection();
-          navigation.navigate('InterventionDetail', { alertId: item.id });
+          navigation.navigate('InterventionDetail', { alertId: item.id, farmId: item.farmId });
         }}
       >
         <View style={[styles.alertIconCircle, { backgroundColor: item.iconColor + '15' }]}>

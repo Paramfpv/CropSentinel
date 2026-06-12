@@ -20,7 +20,7 @@ const makeRequest = async (path, options = {}) => {
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), 50000);
 
   try {
     const response = await fetch(url, {
@@ -73,14 +73,55 @@ export const fetchFarms = async () => {
 };
 
 export const createFarm = async (farmData) => {
-  return makeRequest('/farm/create', {
+  const path = '/farm/create';
+  const url = getApiUrl(path);
+  const token = demoState.get().authToken;
+  const payload = {
+    farm_name: farmData.farm_name,
+    latitude: farmData.latitude,
+    longitude: farmData.longitude,
+  };
+
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  console.log('[createFarm] Request Payload:', JSON.stringify(payload, null, 2));
+
+  const response = await fetch(url, {
     method: 'POST',
-    body: JSON.stringify({
-      farm_name: farmData.farm_name,
-      latitude: farmData.latitude,
-      longitude: farmData.longitude,
-    }),
+    headers,
+    body: JSON.stringify(payload),
   });
+
+  console.log('[createFarm] Raw Response Status:', response.status);
+
+  if (!response.ok) {
+    let errMsg = `API request failed with status: ${response.status}`;
+    try {
+      const errJson = await response.json();
+      console.log('[createFarm] Error JSON Response:', JSON.stringify(errJson, null, 2));
+      if (errJson && errJson.detail) {
+        if (Array.isArray(errJson.detail)) {
+          errMsg += ` - ${errJson.detail.map(d => d.msg).join(', ')}`;
+        } else {
+          errMsg += ` - ${JSON.stringify(errJson.detail)}`;
+        }
+      }
+    } catch (e) {
+      const textErr = await response.text().catch(() => '');
+      console.log('[createFarm] Error Text Response:', textErr);
+      if (textErr) errMsg += ` - ${textErr}`;
+    }
+    throw new Error(errMsg);
+  }
+
+  const json = await response.json();
+  console.log('[createFarm] Parsed JSON Response:', JSON.stringify(json, null, 2));
+  return json;
 };
 
 export const updateFarm = async (id, farmData) => {
@@ -153,14 +194,10 @@ export const getMarketHistory = async () => {
 };
 
 export const submitIntervention = async (farmId, interventionData) => {
-  return makeRequest('/intervention/submit', {
-    method: 'POST',
-    body: JSON.stringify({
-      farm_id: farmId,
-      action: interventionData.action,
-      cost: interventionData.cost,
-      risk: interventionData.risk,
-    }),
-  });
+  // Backend endpoint does not exist; bypass call and keep D5 mock persistence
+  return {
+    success: true,
+    farm_id: farmId,
+  };
 };
 

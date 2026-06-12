@@ -8,7 +8,7 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // 3 polished demo farms for hackathon judging.
 // All crop_type values map to existing assets: wheat | rice | corn | sugarcane
 // ─────────────────────────────────────────────────────────────────────────────
-export const DEMO_FARMS = [
+export let mockFarms = [
   {
     id: 1,
     name: 'Punjab Wheat Farm',
@@ -26,6 +26,8 @@ export const DEMO_FARMS = [
       yield_loss_risk: 0,
       confidence: 95,
     },
+    latitude: 30.9010,
+    longitude: 75.8573,
   },
   {
     id: 2,
@@ -44,6 +46,8 @@ export const DEMO_FARMS = [
       yield_loss_risk: 9500,
       confidence: 85,
     },
+    latitude: 10.9102,
+    longitude: 79.3629,
   },
   {
     id: 3,
@@ -62,8 +66,12 @@ export const DEMO_FARMS = [
       yield_loss_risk: 45000,
       confidence: 91,
     },
+    latitude: 19.8762,
+    longitude: 75.3433,
   },
 ];
+
+export const DEMO_FARMS = mockFarms;
 
 export const fetchDashboard = async () => {
   await delay(600);
@@ -269,7 +277,7 @@ export const login = async (phoneNumber) => {
 
 export const fetchFarms = async () => {
   await delay(600);
-  return DEMO_FARMS.map(f => ({
+  return mockFarms.map(f => ({
     id: f.id,
     farm_name: f.name,
     latitude: f.latitude,
@@ -280,14 +288,45 @@ export const fetchFarms = async () => {
 
 export const createFarm = async (farmData) => {
   await delay(500);
+  const newId = Math.floor(Math.random() * 1000) + 10;
+  const newFarm = {
+    id: newId,
+    name: farmData.farm_name,
+    crop_type: 'wheat',
+    farm_health_score: 75,
+    ndvi: 0.60,
+    weather_risk: 0.20,
+    soil_moisture: 40,
+    market_risk: 0.30,
+    zone_type: 'healthy',
+    status: 'Crop health stable.',
+    recommendation: {
+      action: 'Continue standard monitoring',
+      estimated_cost: 0,
+      yield_loss_risk: 0,
+      confidence: 95,
+    },
+    latitude: farmData.latitude,
+    longitude: farmData.longitude,
+  };
+  mockFarms.push(newFarm);
   return {
-    farm_id: Math.floor(Math.random() * 1000) + 10,
+    farm_id: newId,
     farm_name: farmData.farm_name,
   };
 };
 
 export const updateFarm = async (id, farmData) => {
   await delay(500);
+  const farmIdx = mockFarms.findIndex(f => f.id === Number(id));
+  if (farmIdx !== -1) {
+    mockFarms[farmIdx] = {
+      ...mockFarms[farmIdx],
+      name: farmData.farm_name,
+      latitude: farmData.latitude,
+      longitude: farmData.longitude,
+    };
+  }
   return {
     farm_id: Number(id),
     farm_name: farmData.farm_name,
@@ -296,6 +335,7 @@ export const updateFarm = async (id, farmData) => {
 
 export const deleteFarm = async (id) => {
   await delay(500);
+  mockFarms = mockFarms.filter(f => f.id !== Number(id));
   return {
     success: true,
     farm_id: Number(id),
@@ -304,15 +344,16 @@ export const deleteFarm = async (id) => {
 
 export const getFarmHistory = async (farmId) => {
   await delay(500);
+  const farm = mockFarms.find(f => f.id === Number(farmId));
   return {
     farm_id: Number(farmId),
     history: [
       {
         created_at: new Date().toISOString(),
-        ndvi: 0.68,
-        risk_score: 15,
-        risk_level: 'low',
-        recommendation: 'Optimal moisture - continue normal irrigation.'
+        ndvi: farm ? farm.ndvi : 0.68,
+        risk_score: farm ? Math.round(farm.weather_risk * 100) : 15,
+        risk_level: farm ? farm.zone_type.toUpperCase() : 'LOW',
+        recommendation: farm ? (farm.recommendation?.action || 'Continue standard monitoring') : 'Optimal moisture - continue normal irrigation.'
       }
     ]
   };

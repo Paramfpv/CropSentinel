@@ -83,6 +83,7 @@ export const AddFieldScreen = ({ navigation, route }) => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [savedFarmId, setSavedFarmId] = useState(null);
+  const savedFarmIdRef = useRef(null);
 
   // Animated values for custom modal
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -147,8 +148,8 @@ export const AddFieldScreen = ({ navigation, route }) => {
     const payload = {
       farm_name: fieldName.trim(),
       crop_type: cropType,
-      latitude: parseFloat(location.latitude.toFixed(4)),
-      longitude: parseFloat(location.longitude.toFixed(4))
+      latitude: (location && Number.isFinite(location.latitude)) ? parseFloat(location.latitude.toFixed(4)) : 0.0,
+      longitude: (location && Number.isFinite(location.longitude)) ? parseFloat(location.longitude.toFixed(4)) : 0.0
     };
 
     console.log("D6 Backend Payload:", JSON.stringify(payload, null, 2));
@@ -159,10 +160,12 @@ export const AddFieldScreen = ({ navigation, route }) => {
       if (isEditMode) {
         res = await updateFarm(farmToEdit.id, payload);
         setSavedFarmId(farmToEdit.id);
+        savedFarmIdRef.current = farmToEdit.id;
       } else {
         res = await createFarm(payload);
         if (res && res.farm_id) {
           setSavedFarmId(String(res.farm_id));
+          savedFarmIdRef.current = String(res.farm_id);
         }
       }
       setShowSuccess(true);
@@ -180,7 +183,7 @@ export const AddFieldScreen = ({ navigation, route }) => {
     
     // Create new/updated farm object to pass to detail screen
     const farmObject = {
-      id: savedFarmId || farmToEdit?.id || 'temp_new_farm',
+      id: savedFarmIdRef.current || savedFarmId || farmToEdit?.id || 'temp_new_farm',
       name: fieldName.trim(),
       cropType: cropType,
       healthScore: farmToEdit?.healthScore || 85,
@@ -188,8 +191,8 @@ export const AddFieldScreen = ({ navigation, route }) => {
       moisture: farmToEdit?.moisture || '45%',
       riskSeverity: farmToEdit?.riskSeverity || 'low',
       zoneType: farmToEdit?.zoneType || 'healthy',
-      latitude: parseFloat(location.latitude.toFixed(4)),
-      longitude: parseFloat(location.longitude.toFixed(4)),
+      latitude: (location && Number.isFinite(location.latitude)) ? parseFloat(location.latitude.toFixed(4)) : (farmToEdit?.latitude || 0.0),
+      longitude: (location && Number.isFinite(location.longitude)) ? parseFloat(location.longitude.toFixed(4)) : (farmToEdit?.longitude || 0.0),
       area: fieldArea || '5.0',
       soilType: soilType,
       location: farmToEdit?.location || `${cropType} Zone`,
@@ -283,7 +286,7 @@ export const AddFieldScreen = ({ navigation, route }) => {
             <View style={styles.fieldSelectLeft}>
               <Feather name="map-pin" size={16} color={materialTheme.colors.textSecondary} style={{ marginRight: 6 }} />
               <Text style={[styles.fieldSelectText, location && { color: materialTheme.colors.onSurface }]}>
-                {location 
+                {(location && Number.isFinite(location.latitude) && Number.isFinite(location.longitude)) 
                   ? `Lat: ${location.latitude.toFixed(4)}, Lon: ${location.longitude.toFixed(4)}` 
                   : t.chooseLocation}
               </Text>

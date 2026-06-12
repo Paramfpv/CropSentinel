@@ -196,7 +196,7 @@ export const FarmDetailScreen = ({ navigation, route }) => {
 
         const [analyzeRes, histRes, mktRes] = await Promise.all([
           postAnalyze({ latitude: lat, longitude: lon, farm_id: farmIdNum }),
-          getFarmHistory(farmFromRoute.id),
+          getFarmHistory(farmIdNum || farmFromRoute.id),
           getMarketHistory()
         ]);
 
@@ -450,7 +450,7 @@ export const FarmDetailScreen = ({ navigation, route }) => {
               labels={ndviData.map(d => d.day)}
               color={materialTheme.colors.primary}
               fallbackText="No NDVI trend data available"
-              formatValue={(v) => v.toFixed(2)}
+              formatValue={(v) => Number.isFinite(v) ? v.toFixed(2) : '0.00'}
             />
           </View>
         </View>
@@ -468,7 +468,7 @@ export const FarmDetailScreen = ({ navigation, route }) => {
               labels={marketData.map(d => d.day)}
               color={materialTheme.colors.tertiary}
               fallbackText="No mandi price data available"
-              formatValue={(v) => `₹${(v/1000).toFixed(1)}k`}
+              formatValue={(v) => Number.isFinite(v) ? `₹${(v/1000).toFixed(1)}k` : '₹0.0k'}
             />
           </View>
         </View>
