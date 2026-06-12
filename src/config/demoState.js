@@ -8,7 +8,8 @@ let state = {
   extraAlerts: [], // list of simulated alerts
   language: 'en',
   profileName: 'Ramesh Kumar',
-  profileEmail: 'ramesh@example.com'
+  profileEmail: 'ramesh@example.com',
+  authToken: null
 };
 
 const listeners = new Set();
@@ -31,7 +32,8 @@ export const demoState = {
       extraAlerts: [],
       language: 'en',
       profileName: 'Ramesh Kumar',
-      profileEmail: 'ramesh@example.com'
+      profileEmail: 'ramesh@example.com',
+      authToken: null
     };
     updateListeners();
   }
@@ -68,6 +70,7 @@ export const useDemoState = () => {
   const setLanguage = (lang) => demoState.set({ language: lang });
   const setProfileName = (name) => demoState.set({ profileName: name });
   const setProfileEmail = (email) => demoState.set({ profileEmail: email });
+  const setAuthToken = (token) => demoState.set({ authToken: token });
 
   return {
     ...localState,
@@ -78,6 +81,7 @@ export const useDemoState = () => {
     setLanguage,
     setProfileName,
     setProfileEmail,
+    setAuthToken,
     resetDemo: demoState.reset
   };
 };

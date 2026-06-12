@@ -254,3 +254,84 @@ export const getMarketHistory = async () => {
     { day: 'Sun', price: 6500 },
   ];
 };
+
+export const login = async (phoneNumber) => {
+  await delay(500);
+  return {
+    access_token: 'mock_jwt_token_12345',
+    token_type: 'bearer',
+    user: {
+      id: 1,
+      phone_number: phoneNumber,
+    },
+  };
+};
+
+export const fetchFarms = async () => {
+  await delay(600);
+  return DEMO_FARMS.map(f => ({
+    id: f.id,
+    farm_name: f.name,
+    latitude: f.latitude,
+    longitude: f.longitude,
+    created_at: new Date().toISOString(),
+  }));
+};
+
+export const createFarm = async (farmData) => {
+  await delay(500);
+  return {
+    farm_id: Math.floor(Math.random() * 1000) + 10,
+    farm_name: farmData.farm_name,
+  };
+};
+
+export const updateFarm = async (id, farmData) => {
+  await delay(500);
+  return {
+    farm_id: Number(id),
+    farm_name: farmData.farm_name,
+  };
+};
+
+export const deleteFarm = async (id) => {
+  await delay(500);
+  return {
+    success: true,
+    farm_id: Number(id),
+  };
+};
+
+export const getFarmHistory = async (farmId) => {
+  await delay(500);
+  return {
+    farm_id: Number(farmId),
+    history: [
+      {
+        created_at: new Date().toISOString(),
+        ndvi: 0.68,
+        risk_score: 15,
+        risk_level: 'low',
+        recommendation: 'Optimal moisture - continue normal irrigation.'
+      }
+    ]
+  };
+};
+
+export const postAnalyze = async (analyzeData) => {
+  await delay(800);
+  return {
+    satellite: { ndvi: 0.65, health_score: 78 },
+    weather: { forecast: 'Clear' },
+    risk: { risk_score: 20, risk_level: 'low', recommendation: 'Continue standard irrigation' },
+  };
+};
+
+export const submitIntervention = async (farmId, interventionData) => {
+  await delay(800);
+  return {
+    success: true,
+    farm_id: farmId,
+  };
+};
+

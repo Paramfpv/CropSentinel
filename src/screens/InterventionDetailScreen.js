@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 
 import { materialTheme } from '../theme';
-import { fetchDashboard, getIntervention } from '../services';
+import { fetchDashboard, getIntervention, submitIntervention } from '../services';
 import { LoadingState } from '../components/LoadingState';
 import { ErrorState } from '../components/ErrorState';
 import { scheduleLocalAlert } from '../services/notifications';
@@ -25,7 +25,7 @@ const triggerHapticSuccess = async () => {
   } catch (e) {}
 };
 
-export const InterventionDetailScreen = ({ navigation }) => {
+export const InterventionDetailScreen = ({ navigation, route }) => {
   const { isDemoMode, isDroughtSimulated, applyIntervention, language } = useDemoState();
   const t = translations[language] || translations.en;
 
@@ -80,22 +80,35 @@ export const InterventionDetailScreen = ({ navigation }) => {
 
   const triggerApply = async () => {
     triggerHapticSelection();
+    if (!details) return;
+    
     setIsApplying(true);
-    // Simulate loading for 800ms
-    setTimeout(async () => {
-      setIsApplying(false);
-      setShowSuccessDialog(true);
+    const farmId = route.params?.farmId || 3;
+    
+    try {
+      await submitIntervention(farmId, {
+        action: details.action,
+        cost: details.cost,
+        risk: details.risk,
+      });
 
       if (isDemoMode) {
-        applyIntervention(3); // Sugarcane farm
+        applyIntervention(farmId);
       }
+      
+      setIsApplying(false);
+      setShowSuccessDialog(true);
       
       // Local notification
       await scheduleLocalAlert(
         "CropSentinel Alert",
         "Intervention applied successfully. Continue monitoring your farm."
       );
-    }, 800);
+    } catch (err) {
+      console.warn("Failed to apply intervention:", err);
+      Alert.alert("Failed to Apply Intervention", err.message || "An error occurred.");
+      setIsApplying(false);
+    }
   };
 
   const loadIntervention = async (isRefreshing = false) => {

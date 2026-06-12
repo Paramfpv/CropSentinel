@@ -138,3 +138,29 @@ Two regressions were successfully resolved on the Settings tab:
    - **Solution**: Added the nested `settings: { ... }` object to both Hindi and English catalogs in [translations.js](file:///c:/Users/Yesh%20bind/OneDrive/Desktop/Faraway/src/constants/translations.js). Used safe fallback properties inside [SettingsScreen.js](file:///c:/Users/Yesh%20bind/OneDrive/Desktop/Faraway/src/screens/SettingsScreen.js) (e.g. `translations[language]?.settings?.account ?? translations.en.settings.account`) to guarantee label availability.
 3. **Verification**:
    - Bundling (`npx expo export`) and diagnostics (`npx expo-doctor`) verified successfully, ensuring 100% Expo Go compatibility.
+
+---
+
+## 🔌 Day 6 — Backend API Integration
+
+We have fully connected the mobile application to the FastAPI python backend deployed on Render, implementing authentication, farm CRUD, history tracking, orchestration pipeline triggering, and intervention/recommendation persistence.
+
+### Key Integrations Completed:
+1. **Dynamic JWT Phone Authentication**:
+   - Refactored `LoginScreen.js` to send passwordless login requests to `/auth/login`.
+   - The returned `access_token` is stored in the global `demoState` store and automatically injected as a `Bearer` authorization token for all subsequent requests.
+2. **Farm List & History Parallel Fetching**:
+   - Refactored `FarmsScreen.js` to fetch registered farms from `/farm/list`.
+   - Resolves NDVI history and risk severity for each farm in parallel by hitting the `/history/{farm_id}` endpoint.
+3. **Farm Creation and Fallback Editing/Deletion**:
+   - Connects Save Field in `AddFieldScreen.js` to `/farm/create` for new fields.
+   - For update (`PUT`) and delete (`DELETE`), since the backend does not expose native routes, handlers point to `/farm/{id}` endpoints, falling back to local/mock operations on 404/failure.
+4. **Real-time Pipeline Analysis**:
+   - Deep-dive screen `FarmDetailScreen.js` invokes `/analyze` orchestrator pipeline, fetching Sentinel-2 NDVI metrics and weather risk forecasts.
+5. **AI Recommendation/Intervention Application**:
+   - Added a new service handler `submitIntervention` in `api.js`, `mockApi.js`, and `index.js`.
+   - Updated `InterventionDetailScreen.js` to post applied intervention details to the backend on request trigger, falling back to mock persistence.
+6. **Diagnostics & Bundling Validation**:
+   - Diagnostics successfully checked with `npx expo-doctor` (21/21 passed).
+   - Bundling successfully validated with `npx expo export`.
+

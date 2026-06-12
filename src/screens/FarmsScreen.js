@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 
 import { materialTheme } from '../theme';
 import { crops } from '../assets';
-import { fetchDashboard } from '../services';
+import { fetchDashboard, fetchFarms, deleteFarm, getFarmHistory } from '../services';
 import { LoadingState } from '../components/LoadingState';
 import { useDemoState } from '../config/demoState';
 import { DemoBanner } from '../components/DemoBanner';
@@ -101,7 +101,6 @@ export const FarmsScreen = ({ navigation }) => {
     setError(null);
 
     try {
-      const dashData = await fetchDashboard();
       if (isDemoMode) {
         const sugarcaneHealth = isDroughtSimulated ? 41 : 78;
         const sugarcaneNdvi = isDroughtSimulated ? 0.22 : 0.65;
@@ -158,8 +157,53 @@ export const FarmsScreen = ({ navigation }) => {
         ];
         setFarms(demoFarmsList);
       } else {
-        if (dashData) {
-          if (dashData.farm) {
+        const rawFarms = await fetchFarms();
+        if (rawFarms && Array.isArray(rawFarms)) {
+          const mappedFarms = await Promise.all(rawFarms.map(async (f) => {
+            try {
+              const histRes = await getFarmHistory(f.id);
+              const latest = histRes?.history?.[0];
+              if (latest) {
+                return {
+                  id: String(f.id),
+                  name: f.farm_name || `Farm ${f.id}`,
+                  cropType: 'Wheat', // default crop
+                  healthScore: 100 - (latest.risk_score || 25),
+                  ndvi: latest.ndvi || 0.62,
+                  moisture: latest.risk_level === 'high' ? '12%' : '45%',
+                  riskSeverity: latest.risk_level || 'low',
+                  zoneType: latest.risk_level === 'high' ? 'drought' : 'healthy',
+                  location: `${f.latitude.toFixed(3)}, ${f.longitude.toFixed(3)}`,
+                  latitude: f.latitude,
+                  longitude: f.longitude,
+                  area: '5.0',
+                  soilType: 'Loamy',
+                };
+              }
+            } catch (e) {
+              console.warn(`Failed to fetch history for farm ${f.id}:`, e);
+            }
+            return {
+              id: String(f.id),
+              name: f.farm_name || `Farm ${f.id}`,
+              cropType: 'Wheat',
+              healthScore: 75,
+              ndvi: 0.60,
+              moisture: '40%',
+              riskSeverity: 'low',
+              zoneType: 'healthy',
+              location: `${f.latitude.toFixed(3)}, ${f.longitude.toFixed(3)}`,
+              latitude: f.latitude,
+              longitude: f.longitude,
+              area: '5.0',
+              soilType: 'Loamy',
+            };
+          }));
+          setFarms(mappedFarms);
+        } else {
+          // If fetchFarms doesn't return list, try dashboard data fallback
+          const dashData = await fetchDashboard();
+          if (dashData && dashData.farm) {
             const singleFarm = {
               id: String(dashData.farm.id || 1),
               name: dashData.farm.name || 'Marathwada Sugarcane Farm',
@@ -177,26 +221,8 @@ export const FarmsScreen = ({ navigation }) => {
             };
             setFarms([singleFarm]);
           } else {
-            const rawFarms = dashData.farms || [];
-            const mappedFarms = rawFarms.map(f => ({
-              id: String(f.id),
-              name: f.name,
-              cropType: f.cropType || f.crop_type || 'Wheat',
-              healthScore: f.healthScore || f.health_score || 72,
-              ndvi: f.ndvi || 0.61,
-              moisture: f.moisture || 'Low',
-              riskSeverity: f.riskSeverity || (f.zone_type === 'drought' ? 'high' : 'low'),
-              zoneType: f.zoneType || f.zone_type || 'drought',
-              location: f.location || undefined,
-              latitude: f.latitude || undefined,
-              longitude: f.longitude || undefined,
-              area: f.area || '5.0',
-              soilType: f.soilType || f.soil_type || 'Clay',
-            }));
-            setFarms(mappedFarms);
+            throw new Error('No farms data received');
           }
-        } else {
-          throw new Error('No farms data received');
         }
       }
     } catch (err) {
@@ -244,9 +270,18 @@ export const FarmsScreen = ({ navigation }) => {
         {
           text: t.deleteFarm,
           style: "destructive",
-          onPress: () => {
-            setFarms(prev => prev.filter(f => f.id !== farm.id));
-            Alert.alert(t.success, "Farm removed from list.");
+          onPress: async () => {
+            triggerHapticWarning();
+            try {
+              // Optimistic update
+              setFarms(prev => prev.filter(f => f.id !== farm.id));
+              await deleteFarm(farm.id);
+              Alert.alert(t.success, "Farm removed from list.");
+            } catch (err) {
+              console.warn("Delete farm failed:", err);
+              loadFarmsData();
+              Alert.alert("Delete Failed", err.message || "An error occurred while deleting farm.");
+            }
           }
         }
       ]

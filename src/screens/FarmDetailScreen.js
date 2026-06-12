@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 
 import { materialTheme } from '../theme';
 import { crops } from '../assets';
-import { fetchDashboard, getNdviHistory, getMarketHistory } from '../services';
+import { fetchDashboard, getNdviHistory, getMarketHistory, getFarmHistory, postAnalyze } from '../services';
 import { LoadingState } from '../components/LoadingState';
 import { useDemoState } from '../config/demoState';
 import { DemoBanner } from '../components/DemoBanner';
@@ -164,15 +164,79 @@ export const FarmDetailScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const farmFromRoute = route.params?.farm || {
+    id: 1,
+    name: 'North Field',
+    cropType: 'Wheat',
+    healthScore: 72,
+    ndvi: 0.61,
+    moisture: 'Low',
+    droughtRisk: 'High',
+    riskSeverity: 'high',
+  };
+
   const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [dash, ndviRes, marketRes] = await Promise.all([
-        fetchDashboard(),
-        getNdviHistory(),
-        getMarketHistory(),
-      ]);
+      let dash = null;
+      let ndviRes = null;
+      let marketRes = null;
+
+      if (isDemoMode) {
+        [dash, ndviRes, marketRes] = await Promise.all([
+          fetchDashboard(),
+          getNdviHistory(),
+          getMarketHistory(),
+        ]);
+      } else {
+        const lat = parseFloat(farmFromRoute.latitude || 19.8762);
+        const lon = parseFloat(farmFromRoute.longitude || 75.3433);
+        const farmIdNum = parseInt(farmFromRoute.id) || null;
+
+        const [analyzeRes, histRes, mktRes] = await Promise.all([
+          postAnalyze({ latitude: lat, longitude: lon, farm_id: farmIdNum }),
+          getFarmHistory(farmFromRoute.id),
+          getMarketHistory()
+        ]);
+
+        if (analyzeRes) {
+          dash = {
+            farm: {
+              id: farmFromRoute.id,
+              name: farmFromRoute.name,
+              crop_type: farmFromRoute.cropType,
+              latitude: lat,
+              longitude: lon,
+            },
+            farm_health_score: 100 - (analyzeRes.risk?.risk_score ?? 25),
+            ndvi: analyzeRes.satellite?.ndvi ?? 0.65,
+            weather_risk: (analyzeRes.risk?.risk_score ?? 25) / 100,
+            soil_moisture: analyzeRes.satellite?.soil_moisture ?? 35,
+            market_risk: 0.35,
+            last_updated: new Date().toISOString(),
+            status: analyzeRes.risk?.recommendation || 'Crop health stable.',
+            recommendation: {
+              action: analyzeRes.risk?.recommendation || 'No action required.',
+              estimated_cost: 450,
+              yield_loss_risk: 12000,
+              confidence: 88
+            }
+          };
+        }
+
+        if (histRes && histRes.history) {
+          const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+          ndviRes = {
+            trend: histRes.history.slice(0, 7).reverse().map((item, idx) => ({
+              day: days[idx % days.length],
+              value: item.ndvi
+            }))
+          };
+        }
+
+        marketRes = mktRes;
+      }
       
       if (dash) {
         setDashboardData(dash);
@@ -194,17 +258,6 @@ export const FarmDetailScreen = ({ navigation, route }) => {
   useEffect(() => {
     loadData();
   }, [isDemoMode, isDroughtSimulated]);
-
-  const farmFromRoute = route.params?.farm || {
-    id: 1,
-    name: 'North Field',
-    cropType: 'Wheat',
-    healthScore: 72,
-    ndvi: 0.61,
-    moisture: 'Low',
-    droughtRisk: 'High',
-    riskSeverity: 'high',
-  };
 
   const farmData = dashboardData ? {
     id: dashboardData.farm?.id || farmFromRoute.id,

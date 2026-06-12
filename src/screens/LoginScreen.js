@@ -8,6 +8,7 @@ import { materialTheme } from '../theme';
 import { illustrations } from '../assets';
 import { useDemoState } from '../config/demoState';
 import { translations } from '../constants/translations';
+import { login } from '../services';
 
 const triggerHapticSelection = async () => {
   try {
@@ -16,12 +17,13 @@ const triggerHapticSelection = async () => {
 };
 
 export const LoginScreen = ({ navigation }) => {
-  const { language } = useDemoState();
+  const { language, setAuthToken, setProfileEmail, setProfileName } = useDemoState();
   const t = translations[language] || translations.en;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleForgotPress = () => {
     triggerHapticSelection();
@@ -41,9 +43,29 @@ export const LoginScreen = ({ navigation }) => {
     );
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     triggerHapticSelection();
-    navigation.replace('MyFarms');
+    if (!email.trim()) {
+      Alert.alert(t.validationError, "Please enter your mobile phone or email.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await login(email.trim());
+      if (response && response.access_token) {
+        setAuthToken(response.access_token);
+        if (response.user) {
+          setProfileEmail(response.user.phone_number);
+          setProfileName(`Farmer ${response.user.id}`);
+        }
+      }
+      navigation.replace('MyFarms');
+    } catch (error) {
+      console.warn("Login failed:", error);
+      Alert.alert("Login Failed", error.message || "An error occurred during authentication.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -101,8 +123,12 @@ export const LoginScreen = ({ navigation }) => {
             <Text style={styles.forgotText}>{t.forgotPassword}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
-            <Text style={styles.loginText}>{t.login}</Text>
+          <TouchableOpacity 
+            style={[styles.loginBtn, loading && { opacity: 0.7 }]} 
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            <Text style={styles.loginText}>{loading ? "Connecting..." : t.login}</Text>
           </TouchableOpacity>
 
           <Text style={styles.orText}>{t.orContinueWith}</Text>
