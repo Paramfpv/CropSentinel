@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://cropsentinel-on03.onrender.com' : '/api');
 
 export class BackendUnavailableError extends Error {
   constructor(message) {
