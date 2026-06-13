@@ -30,7 +30,13 @@ export default function LoginScreen({ onLogin }) {
     // DEMO BYPASS
     const DEMO_EMAIL = "aayufarm@gmail.com";
     const DEMO_PASSWORD = "aayu@123";
-    if (email.trim() === DEMO_EMAIL && password === DEMO_PASSWORD) {
+    
+    const inputEmail = email.trim().toLowerCase();
+    console.log("Login Attempt:", { email: inputEmail, password: password });
+    console.log("Expected:", { DEMO_EMAIL, DEMO_PASSWORD });
+
+    if (inputEmail === DEMO_EMAIL && password === DEMO_PASSWORD) {
+      console.log("Bypass matched! Setting localStorage...");
       localStorage.setItem("cs_profile_cache", JSON.stringify({ 
         name: "Aayu Farm", 
         email: DEMO_EMAIL, 
