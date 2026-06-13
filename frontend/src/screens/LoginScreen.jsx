@@ -112,6 +112,31 @@ export default function LoginScreen({ onLogin }) {
           gap: 16,
 
       }}>
+        {/* Judges Demo Panel */}
+        <div style={{
+          background: 'rgba(107, 155, 88, 0.1)',
+          border: '1px solid rgba(107, 155, 88, 0.3)',
+          borderRadius: 12, padding: 16, marginBottom: 8,
+          display: 'flex', flexDirection: 'column', gap: 8
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--cs-accent)' }}>Hackathon Demo Account</span>
+            <button 
+              onClick={() => { setEmail("aayufarm@gmail.com"); setPassword("aayu@123"); setIdentifierError(false); }}
+              style={{
+                background: 'var(--cs-accent)', color: '#fff', border: 'none',
+                padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer'
+              }}
+            >
+              Auto-fill
+            </button>
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--cs-text)', fontFamily: 'monospace', lineHeight: 1.5 }}>
+            <strong>Email:</strong> aayufarm@gmail.com<br/>
+            <strong>Password:</strong> aayu@123
+          </div>
+        </div>
+
         {/* Phone / Email */}
         <div>
           <div style={{ position: 'relative' }}>
