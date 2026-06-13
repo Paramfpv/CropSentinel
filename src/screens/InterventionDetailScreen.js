@@ -8,6 +8,7 @@ import { materialTheme } from '../theme';
 import { getIntervention, getFarmHistory, postAnalyze, submitIntervention, fetchFarms } from '../services';
 import { LoadingState } from '../components/LoadingState';
 import { ErrorState } from '../components/ErrorState';
+import { SessionExpiredDialog } from '../components/SessionExpiredDialog';
 import { scheduleLocalAlert } from '../services/notifications';
 import { useDemoState } from '../config/demoState';
 import { DemoBanner } from '../components/DemoBanner';
@@ -36,6 +37,7 @@ export const InterventionDetailScreen = ({ navigation, route }) => {
 
   const [isApplying, setIsApplying] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [sessionExpiredVisible, setSessionExpiredVisible] = useState(false);
 
   // Animated values
   const confidenceProgress = useRef(new Animated.Value(0)).current;
@@ -105,7 +107,14 @@ export const InterventionDetailScreen = ({ navigation, route }) => {
         "Intervention applied successfully. Continue monitoring your farm."
       );
     } catch (err) {
-      console.warn("Failed to apply intervention:", err);
+      if (err.message === 'SESSION_EXPIRED') {
+        setSessionExpiredVisible(true);
+        setIsApplying(false);
+        return;
+      }
+      if (__DEV__) {
+        console.warn("Failed to apply intervention:", err);
+      }
       Alert.alert("Failed to Apply Intervention", err.message || "An error occurred.");
       setIsApplying(false);
     }
@@ -266,7 +275,13 @@ export const InterventionDetailScreen = ({ navigation, route }) => {
         }
       }
     } catch (err) {
-      console.warn('Failed to load recommendation details:', err);
+      if (err.message === 'SESSION_EXPIRED') {
+        setSessionExpiredVisible(true);
+        return;
+      }
+      if (__DEV__) {
+        console.warn('Failed to load recommendation details:', err);
+      }
       setError(err.message || 'Failed to load recommendation details. Please try again.');
     } finally {
       setLoading(false);
@@ -527,6 +542,16 @@ export const InterventionDetailScreen = ({ navigation, route }) => {
           <Text style={styles.bottomNavText}>{t.profile}</Text>
         </TouchableOpacity>
       </View>
+      <SessionExpiredDialog
+        visible={sessionExpiredVisible}
+        onConfirm={() => {
+          setSessionExpiredVisible(false);
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          });
+        }}
+      />
     </SafeAreaView>
   );
 };

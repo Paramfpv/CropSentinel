@@ -13,6 +13,7 @@ import { ErrorState } from '../components/ErrorState';
 import { useDemoState } from '../config/demoState';
 import { DemoBanner } from '../components/DemoBanner';
 import { translations } from '../constants/translations';
+import { SessionExpiredDialog } from '../components/SessionExpiredDialog';
 
 // Simple in-memory weather cache (30 minutes caching)
 let weatherCache = {
@@ -69,7 +70,9 @@ const fetchWeather = async (latitude, longitude) => {
       return formatted;
     }
   } catch (err) {
-    console.warn('Failed to fetch from Open-Meteo:', err);
+    if (__DEV__) {
+      console.warn('Failed to fetch from Open-Meteo:', err);
+    }
   }
 
   // Fallback if API fails and no cache exists
@@ -130,6 +133,7 @@ export const MyFarmsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [sessionExpiredVisible, setSessionExpiredVisible] = useState(false);
 
   const [weatherData, setWeatherData] = useState({
     temp: '31°C',
@@ -301,7 +305,9 @@ export const MyFarmsScreen = ({ navigation }) => {
                 };
               }
             } catch (err) {
-              console.warn(`Failed to fetch history for farm ${farm.id}:`, err);
+              if (__DEV__) {
+                console.warn(`Failed to fetch history for farm ${farm.id}:`, err);
+              }
             }
             // Safe fallback if history is not available or fails
             return {
@@ -348,7 +354,13 @@ export const MyFarmsScreen = ({ navigation }) => {
         setAgents(mappedAgents);
       }
     } catch (err) {
-      console.warn('Failed to load dashboard data:', err);
+      if (err.message === 'SESSION_EXPIRED') {
+        setSessionExpiredVisible(true);
+        return;
+      }
+      if (__DEV__) {
+        console.warn('Failed to load dashboard data:', err);
+      }
       setError('Could not retrieve dashboard metrics. Please check connection and try again.');
     } finally {
       setLoading(false);
@@ -623,6 +635,16 @@ export const MyFarmsScreen = ({ navigation }) => {
           <Text style={styles.bottomNavText}>{t.profile}</Text>
         </TouchableOpacity>
       </View>
+      <SessionExpiredDialog
+        visible={sessionExpiredVisible}
+        onConfirm={() => {
+          setSessionExpiredVisible(false);
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          });
+        }}
+      />
     </SafeAreaView>
   );
 };

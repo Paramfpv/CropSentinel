@@ -110,7 +110,9 @@ export const LoginScreen = ({ navigation }) => {
       }
       navigation.replace('MyFarms');
     } catch (error) {
-      console.warn('Login failed:', error);
+      if (__DEV__) {
+        console.warn('Login failed:', error);
+      }
       Alert.alert('Login Failed', error.message || 'An error occurred during authentication.');
     } finally {
       setLoading(false);

@@ -8,7 +8,10 @@ import * as Location from 'expo-location';
 import { materialTheme } from '../theme';
 import { useDemoState } from '../config/demoState';
 import { translations } from '../constants/translations';
-import { createFarm, updateFarm } from '../services';
+import { createFarm, updateFarm, fetchFarms } from '../services';
+import { SessionExpiredDialog } from '../components/SessionExpiredDialog';
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const triggerHapticSelection = async () => {
   try {
@@ -87,6 +90,9 @@ export const AddFieldScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [savedFarmId, setSavedFarmId] = useState(null);
   const savedFarmIdRef = useRef(null);
+  const [isSynced, setIsSynced] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(false);
+  const [sessionExpiredVisible, setSessionExpiredVisible] = useState(false);
 
   // Manual Coordinates and GPS states
   const [errors, setErrors] = useState({});
@@ -121,8 +127,82 @@ export const AddFieldScreen = ({ navigation, route }) => {
       });
       setManualLat(String(latVal));
       setManualLon(String(lonVal));
+      setIsSynced(true); // Existing farms are synced
     }
   }, [farmToEdit]);
+
+  useEffect(() => {
+    const newErrors = {};
+
+    // 1. Name validation: 3 to 50 characters, not whitespace only
+    const trimmedName = fieldName.trim();
+    if (fieldName.length > 0) {
+      if (trimmedName.length < 3 || trimmedName.length > 50) {
+        newErrors.fieldName = language === 'hi'
+          ? 'खेत का नाम 3 और 50 वर्णों के बीच होना चाहिए'
+          : 'Farm name must be between 3 and 50 characters';
+      }
+    } else {
+      newErrors.fieldName = language === 'hi' ? 'खेत का नाम आवश्यक है' : 'Farm name is required';
+    }
+
+    // 2. Crop type validation
+    if (!cropType) {
+      newErrors.cropType = language === 'hi' ? 'फसल प्रकार आवश्यक है' : 'Crop type is required';
+    }
+
+    // 3. Soil type validation
+    if (!soilType) {
+      newErrors.soilType = language === 'hi' ? 'मिट्टी प्रकार आवश्यक है' : 'Soil type is required';
+    }
+
+    // 4. Coordinates boundary check
+    const latNum = parseFloat(manualLat);
+    const lonNum = parseFloat(manualLon);
+
+    if (isManualExpand) {
+      if (manualLat.length > 0) {
+        if (isNaN(latNum) || latNum < -90 || latNum > 90) {
+          newErrors.manualLat = language === 'hi'
+            ? 'अक्षांश -90 और 90 के बीच होना चाहिए'
+            : 'Latitude must be between -90 and 90';
+        }
+      } else {
+        newErrors.manualLat = language === 'hi' ? 'अक्षांश आवश्यक है' : 'Latitude is required';
+      }
+
+      if (manualLon.length > 0) {
+        if (isNaN(lonNum) || lonNum < -180 || lonNum > 180) {
+          newErrors.manualLon = language === 'hi'
+            ? 'देशांतर -180 और 180 के बीच होना चाहिए'
+            : 'Longitude must be between -180 and 180';
+        }
+      } else {
+        newErrors.manualLon = language === 'hi' ? 'देशांतर आवश्यक है' : 'Longitude is required';
+      }
+    }
+
+    // Overall location checks
+    if (!location || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) {
+      newErrors.location = language === 'hi' ? 'स्थान आवश्यक है' : 'Location is required';
+    } else {
+      const lat = location.latitude;
+      const lon = location.longitude;
+      if (lat < -90 || lat > 90) {
+        newErrors.location = language === 'hi'
+          ? 'अक्षांश -90 और 90 के बीच होना चाहिए'
+          : 'Latitude must be between -90 and 90';
+      }
+      if (lon < -180 || lon > 180) {
+        newErrors.location = language === 'hi'
+          ? 'देशांतर -180 और 180 के बीच होना चाहिए'
+          : 'Longitude must be between -180 and 180';
+      }
+    }
+
+    setErrors(newErrors);
+    setIsFormValid(Object.keys(newErrors).length === 0);
+  }, [fieldName, cropType, soilType, location, manualLat, manualLon, isManualExpand, language]);
 
   const triggerHapticWarning = async () => {
     try {
@@ -230,34 +310,8 @@ export const AddFieldScreen = ({ navigation, route }) => {
   };
 
   const handleSave = async () => {
-    // Validation
-    const newErrors = {};
-    if (!fieldName.trim()) {
-      newErrors.fieldName = language === 'hi' ? 'खेत का नाम आवश्यक है' : 'Farm Name is required';
-    }
-    if (!cropType) {
-      newErrors.cropType = language === 'hi' ? 'फसल प्रकार आवश्यक है' : 'Crop Type is required';
-    }
-    if (!soilType) {
-      newErrors.soilType = language === 'hi' ? 'मिट्टी प्रकार आवश्यक है' : 'Soil Type is required';
-    }
-    
-    if (!location || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) {
-      newErrors.location = language === 'hi' ? 'खेत का स्थान आवश्यक है' : 'Farm Location coordinates are required';
-    } else {
-      const lat = location.latitude;
-      const lon = location.longitude;
-      if (lat < -90 || lat > 90) {
-        newErrors.manualLat = language === 'hi' ? 'अक्षांश -90 और 90 के बीच होना चाहिए' : 'Latitude must be between -90 and 90';
-      }
-      if (lon < -180 || lon > 180) {
-        newErrors.manualLon = language === 'hi' ? 'देशांतर -180 और 180 के बीच होना चाहिए' : 'Longitude must be between -180 and 180';
-      }
-    }
-
-    if (Object.keys(newErrors).length > 0) {
+    if (!isFormValid) {
       triggerHapticWarning();
-      setErrors(newErrors);
       return;
     }
 
@@ -269,6 +323,7 @@ export const AddFieldScreen = ({ navigation, route }) => {
     };
 
     setLoading(true);
+    setIsSynced(false);
 
     try {
       let res;
@@ -276,16 +331,45 @@ export const AddFieldScreen = ({ navigation, route }) => {
         res = await updateFarm(farmToEdit.id, payload);
         setSavedFarmId(farmToEdit.id);
         savedFarmIdRef.current = farmToEdit.id;
+        setIsSynced(true);
       } else {
         res = await createFarm(payload);
         if (res && res.farm_id) {
-          setSavedFarmId(String(res.farm_id));
-          savedFarmIdRef.current = String(res.farm_id);
+          const newId = String(res.farm_id);
+          setSavedFarmId(newId);
+          savedFarmIdRef.current = newId;
+
+          // 3-attempt verification flow
+          let synced = false;
+          for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+              const list = await fetchFarms();
+              const found = (list || []).some(f => String(f.id) === newId);
+              if (found) {
+                synced = true;
+                break;
+              }
+            } catch (fetchErr) {
+              if (__DEV__) {
+                console.warn(`Verification attempt ${attempt} failed:`, fetchErr);
+              }
+            }
+            if (attempt < 3) {
+              await delay(500);
+            }
+          }
+          setIsSynced(synced);
         }
       }
       setShowSuccess(true);
     } catch (err) {
-      console.warn("Failed to save farm:", err);
+      if (err.message === 'SESSION_EXPIRED') {
+        setSessionExpiredVisible(true);
+        return;
+      }
+      if (__DEV__) {
+        console.warn("Failed to save farm:", err);
+      }
       Alert.alert("Error Saving Farm", err.message || "An error occurred while communicating with the backend.");
     } finally {
       setLoading(false);
@@ -294,8 +378,16 @@ export const AddFieldScreen = ({ navigation, route }) => {
 
   const handleViewDetails = () => {
     triggerHapticSelection();
+    if (!isSynced) {
+      Alert.alert(
+        language === 'hi' ? 'सिंक हो रहा है' : 'Farm Syncing',
+        language === 'hi'
+          ? 'आपका खेत बनाया जा चुका है लेकिन अभी भी सर्वर के साथ समन्वयित हो रहा है। कृपया कुछ क्षणों में फिर से प्रयास करें या सूची को पुनः लोड करें।'
+          : 'Your farm was created successfully but is still synchronizing with the server. Please check again in a few moments.'
+      );
+      return;
+    }
     setShowSuccess(false);
-    
     const exactId = parseInt(savedFarmIdRef.current || savedFarmId || farmToEdit?.id);
     navigation.navigate('FarmDetail', { farmId: exactId });
   };
@@ -336,13 +428,16 @@ export const AddFieldScreen = ({ navigation, route }) => {
             value={fieldName}
             onChangeText={(text) => {
               setFieldName(text);
-              setErrors(prev => ({ ...prev, fieldName: null }));
             }}
             autoCorrect={false}
             autoCapitalize="words"
             editable={true}
           />
-          {errors.fieldName && <Text style={styles.inlineErrorText}>{errors.fieldName}</Text>}
+          {errors.fieldName ? (
+            <Text style={styles.inlineErrorText}>{errors.fieldName}</Text>
+          ) : (
+            <Text style={styles.helperText}>{language === 'hi' ? 'अपने खेत के लिए एक अनूठा नाम दर्ज करें (3-50 वर्ण)।' : 'Enter a unique name for your farm field (3-50 characters).'}</Text>
+          )}
         </View>
 
         <DropdownSelector
@@ -351,12 +446,15 @@ export const AddFieldScreen = ({ navigation, route }) => {
           options={["Wheat", "Rice", "Corn", "Sugarcane"]}
           onSelect={(val) => {
             setCropType(val);
-            setErrors(prev => ({ ...prev, cropType: null }));
           }}
           placeholder={t.chooseCrop}
           t={t}
         />
-        {errors.cropType && <Text style={styles.inlineErrorText}>{errors.cropType}</Text>}
+        {errors.cropType ? (
+          <Text style={styles.inlineErrorText}>{errors.cropType}</Text>
+        ) : (
+          <Text style={styles.helperText}>{language === 'hi' ? 'इस खेत में उगाई जाने वाली मुख्य फसल का चयन करें।' : 'Select the primary crop grown in this field.'}</Text>
+        )}
 
         <View style={styles.fieldGroup}>
           <Text style={styles.fieldLabel}>{t.fieldAreaLabel}</Text>
@@ -377,12 +475,15 @@ export const AddFieldScreen = ({ navigation, route }) => {
           options={["Sandy", "Clay", "Loamy", "Silty"]}
           onSelect={(val) => {
             setSoilType(val);
-            setErrors(prev => ({ ...prev, soilType: null }));
           }}
           placeholder={t.chooseSoil}
           t={t}
         />
-        {errors.soilType && <Text style={styles.inlineErrorText}>{errors.soilType}</Text>}
+        {errors.soilType ? (
+          <Text style={styles.inlineErrorText}>{errors.soilType}</Text>
+        ) : (
+          <Text style={styles.helperText}>{language === 'hi' ? 'मिट्टी की बनावट का चयन करें।' : 'Select the dominant soil texture.'}</Text>
+        )}
 
         {/* Farm Location Selection Section */}
         <View style={styles.fieldGroup}>
@@ -440,7 +541,11 @@ export const AddFieldScreen = ({ navigation, route }) => {
                   keyboardType="numeric"
                   editable={true}
                 />
-                {errors.manualLat && <Text style={styles.inlineErrorText}>{errors.manualLat}</Text>}
+                {errors.manualLat ? (
+                  <Text style={styles.inlineErrorText}>{errors.manualLat}</Text>
+                ) : (
+                  <Text style={styles.helperText}>Range: -90 to 90</Text>
+                )}
               </View>
               <View style={styles.manualInputCol}>
                 <Text style={styles.manualInputLabel}>Longitude</Text>
@@ -453,7 +558,11 @@ export const AddFieldScreen = ({ navigation, route }) => {
                   keyboardType="numeric"
                   editable={true}
                 />
-                {errors.manualLon && <Text style={styles.inlineErrorText}>{errors.manualLon}</Text>}
+                {errors.manualLon ? (
+                  <Text style={styles.inlineErrorText}>{errors.manualLon}</Text>
+                ) : (
+                  <Text style={styles.helperText}>Range: -180 to 180</Text>
+                )}
               </View>
             </View>
           )}
@@ -480,12 +589,12 @@ export const AddFieldScreen = ({ navigation, route }) => {
         )}
 
         <TouchableOpacity 
-          style={[styles.saveBtn, loading && { opacity: 0.7 }]} 
+          style={[styles.saveBtn, (loading || !isFormValid) && styles.saveBtnDisabled]} 
           onPress={() => {
             triggerHapticSelection();
             handleSave();
           }} 
-          disabled={loading}
+          disabled={loading || !isFormValid}
           activeOpacity={0.8}
         >
           <Text style={styles.saveBtnText}>{loading ? "Saving..." : (isEditMode ? t.updateFarm : t.saveField)}</Text>
@@ -563,6 +672,16 @@ export const AddFieldScreen = ({ navigation, route }) => {
           </Animated.View>
         </View>
       )}
+      <SessionExpiredDialog
+        visible={sessionExpiredVisible}
+        onConfirm={() => {
+          setSessionExpiredVisible(false);
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          });
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -884,5 +1003,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: materialTheme.colors.onSurface,
+  },
+  saveBtnDisabled: {
+    backgroundColor: '#A3A3A3',
+    opacity: 0.6,
+  },
+  helperText: {
+    color: '#8A8A85',
+    fontSize: 12,
+    marginTop: 4,
   },
 });
