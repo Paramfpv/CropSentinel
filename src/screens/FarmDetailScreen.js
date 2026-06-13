@@ -9,6 +9,7 @@ import { materialTheme } from '../theme';
 import { crops } from '../assets';
 import { getNdviHistory, getMarketHistory, getFarmHistory, postAnalyze, fetchFarms } from '../services';
 import { LoadingState } from '../components/LoadingState';
+import { ErrorState } from '../components/ErrorState';
 import { useDemoState } from '../config/demoState';
 import { DemoBanner } from '../components/DemoBanner';
 import { scheduleLocalAlert } from '../services/notifications';
@@ -79,7 +80,7 @@ const SvgSparkline = ({ data, labels, color, fallbackText, formatValue }) => {
   const chartW = W - PAD_LEFT - PAD_RIGHT;
   const chartH = H - PAD_TOP - PAD_BOTTOM;
 
-  if (!data || data.length === 0) {
+  if (!data || data.length <= 1) {
     return (
       <View style={{ height: H, justifyContent: 'center', alignItems: 'center' }}>
         <Text style={{ color: materialTheme.colors.textSecondary, fontSize: 13 }}>{fallbackText}</Text>
@@ -401,6 +402,20 @@ export const FarmDetailScreen = ({ navigation, route }) => {
           <Text style={styles.headerTitle}>Loading...</Text>
         </View>
         <LoadingState message="Fetching farm details..." />
+      </SafeAreaView>
+    );
+  }
+
+  if (error && !dashboardData) {
+    return (
+      <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => { triggerHapticSelection(); navigation.goBack(); }} style={styles.backBtn}>
+            <Feather name="arrow-left" size={22} color={materialTheme.colors.onSurface} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{farmInfo?.name || 'Error'}</Text>
+        </View>
+        <ErrorState message={error} onRetry={loadData} />
       </SafeAreaView>
     );
   }
