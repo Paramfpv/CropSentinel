@@ -102,20 +102,7 @@ function AppNavigation() {
     if (phase === 'welcome') return <WelcomeScreen onStart={() => handleSetPhase('login')} />;
     if (phase === 'login')   return <LoginScreen   onLogin={() => { handleSetPhase('app'); setScreen('edit_profile'); }}  />;
 
-    if (state.error && phase === 'app') {
-      return (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
-          <AlertTriangle size={48} color="#DC2626" style={{ marginBottom: 16 }} />
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--cs-text)', margin: '0 0 8px' }}>Data Unavailable</h2>
-          <p style={{ fontSize: 14, color: 'var(--cs-text-sec)', margin: '0 0 24px', lineHeight: 1.5 }}>
-            {state.error}
-          </p>
-          <button onClick={() => window.location.reload()} style={{ padding: '12px 24px', background: 'var(--cs-primary)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
-            Retry Connection
-          </button>
-        </div>
-      );
-    }
+    // The blocking error screen has been removed. Errors are now shown via a non-blocking top banner.
 
     switch (screen) {
       case 'home':                  return <HomeScreen             onNavigate={navigate} />;
@@ -158,6 +145,14 @@ function AppNavigation() {
         display: 'flex',
         flexDirection: 'column',
       }}>
+        {phase === 'app' && state.error && (
+          <div style={{ background: '#FEF2F2', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #FEE2E2', zIndex: 100 }}>
+            <AlertTriangle size={18} color="#DC2626" style={{ flexShrink: 0 }} />
+            <p style={{ margin: 0, fontSize: 13, color: '#991B1B', fontWeight: 600, lineHeight: 1.4 }}>
+              Unable to reach server. Some live data may be unavailable.
+            </p>
+          </div>
+        )}
         {renderScreen()}
       </div>
 

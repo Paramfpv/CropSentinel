@@ -23,6 +23,8 @@ export default function GlobalFarmSelector() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  if (farms.length === 0) return null;
+
   if (farms.length <= 1) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column' }}>

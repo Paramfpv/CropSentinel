@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-lea
 import L from 'leaflet';
 import axios from 'axios';
 import { useI18n } from '../I18nContext';
-import { createFarm } from '../services/api';
+import { createFarm, analyzeFarm } from '../services/api';
 import { useCropSentinel } from '../state/AppContext';
 import toast from 'react-hot-toast';
 
@@ -306,6 +306,16 @@ export default function AddFieldScreen({ onNavigate }) {
     try {
       const created = await createFarm(payload);
       if (created && created.id) {
+        analyzeFarm(payload.latitude, payload.longitude, created.id)
+          .then(analysis => {
+            setState(prev => ({
+              ...prev,
+              farms: prev.farms.map(f => String(f.id) === String(created.id) ? { ...f, analysis } : f),
+              activeAnalysis: String(prev.activeFarmId) === String(created.id) ? analysis : prev.activeAnalysis
+            }));
+          })
+          .catch(e => console.error("Background analysis failed", e));
+
         setState(prev => ({
           ...prev,
           farms: [...prev.farms, {
@@ -316,7 +326,7 @@ export default function AddFieldScreen({ onNavigate }) {
             sowing_date: payload.sowing_date || null
           }],
           activeFarmId: created.id,
-          activeAnalysis: null // Will show loading state or "Data unavailable" until backend catches up
+          activeAnalysis: null
         }));
       }
       onNavigate('farms');
