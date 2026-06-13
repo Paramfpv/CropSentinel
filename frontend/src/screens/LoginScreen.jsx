@@ -11,8 +11,8 @@ export default function LoginScreen({ onLogin }) {
   const { t } = useI18n();
   const { setState } = useCropSentinel();
   const [name,     setName]     = useState('');
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('');
+  const [email,    setEmail]    = useState('aayufarm@gmail.com');
+  const [password, setPassword] = useState('aayu@123');
   const [showPw,   setShowPw]   = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [isRegister, setIsRegister] = useState(false);
@@ -112,30 +112,6 @@ export default function LoginScreen({ onLogin }) {
           gap: 16,
 
       }}>
-
-        {/* Demo Mode Bypass for Judges */}
-        <button 
-          onClick={() => {
-            const DEMO_EMAIL = "aayufarm@gmail.com";
-            localStorage.setItem("cs_profile_cache", JSON.stringify({ 
-              name: "Aayu Farm", 
-              email: DEMO_EMAIL, 
-              role: "Farmer" 
-            }));
-            setState(prev => ({ ...prev, user: { email: DEMO_EMAIL }, token: "demo-token" }));
-            toast.success("Demo Mode activated");
-            onLogin();
-          }}
-          style={{
-            background: 'var(--cs-bg)', color: 'var(--cs-accent)', 
-            border: '2px solid var(--cs-accent)',
-            padding: '12px 16px', borderRadius: 16, fontSize: 13, fontWeight: 800, cursor: 'pointer',
-            display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8,
-            marginTop: -8
-          }}
-        >
-          Continue in Demo Mode
-        </button>
 
         {/* Phone / Email */}
         <div>
