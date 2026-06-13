@@ -26,6 +26,22 @@ export default function LoginScreen({ onLogin }) {
 
   const handleLogin = async () => {
     if (!email || !password) return toast.error("Please enter credentials");
+    
+    // DEMO BYPASS
+    const DEMO_EMAIL = "aayufarm@gmail.com";
+    const DEMO_PASSWORD = "aayu@123";
+    if (email.trim() === DEMO_EMAIL && password === DEMO_PASSWORD) {
+      localStorage.setItem("cs_profile_cache", JSON.stringify({ 
+        name: "Aayu Farm", 
+        email: DEMO_EMAIL, 
+        role: "Farmer" 
+      }));
+      setState(prev => ({ ...prev, user: { email: DEMO_EMAIL }, token: "demo-token" }));
+      toast.success("Demo Login successful");
+      onLogin();
+      return;
+    }
+
     if (identifierError) return toast.error("Please enter a valid phone number or email");
     setLoading(true);
     try {
