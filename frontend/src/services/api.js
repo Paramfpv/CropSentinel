@@ -1,4 +1,4 @@
-let base = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://cropsentinel-on03.onrender.com' : '/api');
+let base = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://cropsentinel-wrls.onrender.com' : '/api');
 if (import.meta.env.PROD && base.endsWith('/api')) {
   base = base.replace(/\/api$/, '');
 }
