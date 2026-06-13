@@ -232,9 +232,15 @@ export const AddFieldScreen = ({ navigation, route }) => {
   const handleSave = async () => {
     // Validation
     const newErrors = {};
-    if (!fieldName.trim()) {
+    const trimmedFieldName = fieldName.trim();
+    if (!trimmedFieldName) {
       newErrors.fieldName = language === 'hi' ? 'खेत का नाम आवश्यक है' : 'Farm Name is required';
+    } else if (trimmedFieldName.length < 3) {
+      newErrors.fieldName = language === 'hi' ? 'खेत का नाम कम से कम 3 वर्णों का होना चाहिए' : 'Farm Name must be at least 3 characters';
+    } else if (trimmedFieldName.length > 50) {
+      newErrors.fieldName = language === 'hi' ? 'खेत का नाम 50 वर्णों से अधिक नहीं होना चाहिए' : 'Farm Name must not exceed 50 characters';
     }
+
     if (!cropType) {
       newErrors.cropType = language === 'hi' ? 'फसल प्रकार आवश्यक है' : 'Crop Type is required';
     }
@@ -242,16 +248,37 @@ export const AddFieldScreen = ({ navigation, route }) => {
       newErrors.soilType = language === 'hi' ? 'मिट्टी प्रकार आवश्यक है' : 'Soil Type is required';
     }
     
-    if (!location || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) {
-      newErrors.location = language === 'hi' ? 'खेत का स्थान आवश्यक है' : 'Farm Location coordinates are required';
-    } else {
-      const lat = location.latitude;
-      const lon = location.longitude;
-      if (lat < -90 || lat > 90) {
+    let latVal = location?.latitude;
+    let lonVal = location?.longitude;
+
+    if (isManualExpand || (!location && manualLat && manualLon)) {
+      const latParsed = parseFloat(manualLat);
+      const lonParsed = parseFloat(manualLon);
+      if (isNaN(latParsed)) {
+        newErrors.manualLat = language === 'hi' ? 'अक्षांश आवश्यक है' : 'Latitude is required';
+      } else if (latParsed < -90 || latParsed > 90) {
         newErrors.manualLat = language === 'hi' ? 'अक्षांश -90 और 90 के बीच होना चाहिए' : 'Latitude must be between -90 and 90';
+      } else {
+        latVal = latParsed;
       }
-      if (lon < -180 || lon > 180) {
+
+      if (isNaN(lonParsed)) {
+        newErrors.manualLon = language === 'hi' ? 'देशांतर आवश्यक है' : 'Longitude is required';
+      } else if (lonParsed < -180 || lonParsed > 180) {
         newErrors.manualLon = language === 'hi' ? 'देशांतर -180 और 180 के बीच होना चाहिए' : 'Longitude must be between -180 and 180';
+      } else {
+        lonVal = lonParsed;
+      }
+    } else {
+      if (!location || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) {
+        newErrors.location = language === 'hi' ? 'खेत का स्थान आवश्यक है' : 'Farm Location coordinates are required';
+      } else {
+        if (latVal < -90 || latVal > 90) {
+          newErrors.location = language === 'hi' ? 'अक्षांश -90 और 90 के बीच होना चाहिए' : 'Latitude must be between -90 and 90';
+        }
+        if (lonVal < -180 || lonVal > 180) {
+          newErrors.location = language === 'hi' ? 'देशांतर -180 और 180 के बीच होना चाहिए' : 'Longitude must be between -180 and 180';
+        }
       }
     }
 
@@ -262,10 +289,10 @@ export const AddFieldScreen = ({ navigation, route }) => {
     }
 
     const payload = {
-      farm_name: fieldName.trim(),
+      farm_name: trimmedFieldName,
       crop_type: cropType,
-      latitude: parseFloat(location.latitude.toFixed(6)),
-      longitude: parseFloat(location.longitude.toFixed(6))
+      latitude: parseFloat(latVal.toFixed(6)),
+      longitude: parseFloat(lonVal.toFixed(6))
     };
 
     setLoading(true);
