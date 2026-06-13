@@ -9,6 +9,7 @@ import { materialTheme } from '../theme';
 import { crops } from '../assets';
 import { fetchFarms, deleteFarm, getFarmHistory } from '../services';
 import { LoadingState } from '../components/LoadingState';
+import { ErrorState } from '../components/ErrorState';
 import { useDemoState } from '../config/demoState';
 import { DemoBanner } from '../components/DemoBanner';
 import { translations } from '../constants/translations';
@@ -268,7 +269,7 @@ export const FarmsScreen = ({ navigation }) => {
   };
 
   const filteredFarms = farms.filter(farm => {
-    const matchesSearch = farm.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (farm.name || '').toLowerCase().includes((searchQuery || '').toLowerCase());
     let matchesStatus = true;
 
     if (activeFilter === 'Healthy') {
@@ -313,6 +314,17 @@ export const FarmsScreen = ({ navigation }) => {
 
   if (loading && !refreshing && farms.length === 0) {
     return <LoadingState message="Fetching farms..." />;
+  }
+
+  if (error && farms.length === 0) {
+    return (
+      <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t.myFarms}</Text>
+        </View>
+        <ErrorState message={error} onRetry={() => loadFarmsData(false)} />
+      </SafeAreaView>
+    );
   }
 
   return (

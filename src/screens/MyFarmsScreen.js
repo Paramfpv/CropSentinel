@@ -379,6 +379,17 @@ export const MyFarmsScreen = ({ navigation }) => {
     return <LoadingState message="Fetching dashboard metrics..." />;
   }
 
+  if (error && farms.length === 0) {
+    return (
+      <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+        <View style={styles.header}>
+          <Text style={styles.greeting}>{t.greeting}</Text>
+        </View>
+        <ErrorState message={error} onRetry={() => loadDashboardData(false)} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       <DemoBanner />
