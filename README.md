@@ -38,13 +38,24 @@ CropSentinel/
 │   ├── QUICKSTART.md       # Mobile quick start guide
 │   ├── RELEASE_NOTES.md    # Version release details
 │   ├── TESTING_GUIDE.md    # Detailed test guides & checklists
-│   ├── BUG_REPORT_TEMPLATE.md
-│   └── demo_farm_review.md
+│   └── BUG_REPORT_TEMPLATE.md
 │
 ├── README.md               # Main monorepo entry point
 ├── .gitignore              # Unified ignore specifications
 └── LICENSE                 # MIT License file
 ```
+
+---
+
+## 🌿 Branch Structure
+
+To maintain a clean repository history, the codebase utilizes the following branch layout:
+* **`main`**: The primary, production-ready branch containing the restructured mobile application, backend API, and web frontend dashboard.
+* **`d7.1-stabilization`**: Legacy branch representing the D7 stabilization history pass (flat mobile app structure).
+* **`yesh/mobile`**: Historical branch representing the initial mobile application development.
+* **`backend`**: Standalone backend API services development branch.
+* **`frontend`**: Standalone web dashboard frontend development branch.
+* **`repo-restructure`**: Restructuring history branch used during the monorepo migration pass.
 
 ---
 
@@ -136,9 +147,9 @@ The web dashboard is built using React 19, Tailwind CSS, and Vite.
 > ```
 
 ### APK Installation
-The final submission build can be installed directly on physical Android devices:
-1. **Download the APK**: [CropSentinel v1.0.0 APK](https://expo.dev/artifacts/eas/m-eaFP90nXZwAhc8rAxyae07wG41wD-8do9bvlaaUxE.apk)
-2. **Scan/Install via Expo**: Visit the [Expo Build Details Page](https://expo.dev/accounts/yeshbind/projects/faraway/builds/89f6abd0-7eec-44ba-9745-e5d64a1a112f) and scan the QR code to install.
+The final D7 stabilization-pass preview build can be installed directly on physical Android devices:
+1. **Download the APK**: [CropSentinel v1.1.0 APK](https://expo.dev/artifacts/eas/ywJTmxSh1znB5n5_I7mTi_kBYr_pORfuE1oOFkYcakc.apk)
+2. **Scan/Install via Expo**: Visit the [Expo Build Details Page](https://expo.dev/accounts/yeshbind/projects/faraway/builds/8605741e-f7ae-474b-b283-986de68da9ca) and scan the QR code to install.
 
 ---
 
