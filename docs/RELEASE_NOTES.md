@@ -9,7 +9,7 @@
 | **Latest Commit** | `fd8999b` |
 | **Build Date** | 2026-06-14 |
 | **Platform** | Android (Expo Go / EAS Preview APK) |
-| **Backend** | `https://cropsentinel-on03.onrender.com` |
+| **Backend** | `https://cropsentinel-wrls.onrender.com` |
 | **EAS Build ID** | `8605741e-f7ae-474b-b283-986de68da9ca` |
 | **APK / Install URL** | https://expo.dev/accounts/yeshbind/projects/faraway/builds/8605741e-f7ae-474b-b283-986de68da9ca |
 

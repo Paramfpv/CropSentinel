@@ -116,13 +116,15 @@ The backend is built with FastAPI, using Uvicorn as the ASGI web server, and int
 
 Interactive API documentation:
 * **Local**: [http://localhost:8000/docs](http://localhost:8000/docs)
-* **Production**: [https://cropsentinel-on03.onrender.com/docs](https://cropsentinel-on03.onrender.com/docs)
+* **Production**: [https://cropsentinel-wrls.onrender.com/docs](https://cropsentinel-wrls.onrender.com/docs)
 
 ---
 
 ### 💻 Frontend Dashboard
 
 The web dashboard is built using React 19, Tailwind CSS, and Vite.
+
+* **Production Deployment**: [https://crop-sentinel-aayumays-projects.vercel.app/](https://crop-sentinel-aayumays-projects.vercel.app/)
 
 1. **Navigate & Install Dependencies**:
    ```bash

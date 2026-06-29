@@ -10,7 +10,7 @@ export class ApiError extends Error {
 }
 
 const getApiUrl = (path) => {
-  const base = API_BASE_URL || 'https://cropsentinel-on03.onrender.com';
+  const base = API_BASE_URL || 'https://cropsentinel-wrls.onrender.com';
   return `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
 };
 
